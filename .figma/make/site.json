@@ -1,0 +1,10 @@
+{
+  "description": "Digital platform streamlining auto repair shops with AI-assisted vehicle lifecycle management from intake to delivery, enhancing efficiency and service quality.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

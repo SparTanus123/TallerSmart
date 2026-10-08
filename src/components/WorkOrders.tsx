@@ -1,0 +1,161 @@
+import { useState } from 'react';
+import type { OTStatus, UserRole, WorkOrder } from '../types';
+import { money, PHASES, shortOT, partsProgress, URGENCY_COLOR } from '../lib/workshop';
+import { statusConfig } from '../data/mockData';
+import { Avatar, Plate, SlaTimer, StatusBadge, UrgentBadge } from './ui/primitives';
+import { Icon } from './ui/Icon';
+import OTDrawer from './OTDrawer'; // We'll create this next
+
+/* ── Card ────────────────────────────────────────────────────── */
+function KanbanCard({ ot, onClick }: { ot: WorkOrder; onClick: () => void }) {
+  const pp = partsProgress(ot);
+  return (
+    <div
+      className="card card-interactive relative flex flex-col gap-2 p-3.5"
+      onClick={onClick}
+      style={{ borderLeft: ot.urgency === 'high' ? `3px solid ${URGENCY_COLOR.high}` : ot.urgency === 'medium' ? `3px solid ${URGENCY_COLOR.medium}` : undefined }}
+    >
+      <div className="flex items-start justify-between">
+        <Plate value={ot.vehicle.plate} />
+        {ot.urgency === 'high' ? <UrgentBadge /> : <div className="font-mono text-[12px] font-medium text-fg-3">{shortOT(ot.number)}</div>}
+      </div>
+
+      <div>
+        <div className="text-[14px] font-semibold text-fg leading-tight mb-0.5">{ot.vehicle.make} {ot.vehicle.model} <span className="font-normal text-fg-3">{ot.vehicle.year}</span></div>
+        <div className="text-[12px] text-fg-2 truncate">{ot.client.name}</div>
+      </div>
+
+      <div className="text-[13px] text-fg-2 line-clamp-2 leading-relaxed bg-surface-2 rounded px-2 py-1.5">{ot.complaint}</div>
+
+      <div className="mt-1 flex items-center justify-between border-t border-line pt-2">
+        <div className="flex items-center gap-2">
+          <Avatar name={ot.technicianName} size={20} />
+          <SlaTimer ot={ot} />
+        </div>
+        <div className="flex items-center gap-3">
+          {pp && (
+            <div className="flex items-center gap-1 font-mono text-[11px] text-fg-3" title="Repuestos listos / totales">
+              <Icon name="part" size={12} />
+              {pp.arrived}/{pp.total}
+            </div>
+          )}
+          <div className="font-mono text-[12px] font-semibold tnum text-fg">{money(ot.total)}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Board ───────────────────────────────────────────────────── */
+export default function WorkOrders({
+  orders, onOrdersChange, openOtId, onOpenOtChange, role,
+}: {
+  orders: WorkOrder[]; onOrdersChange: (o: WorkOrder[]) => void; openOtId: string | null; onOpenOtChange: (id: string | null) => void; role: UserRole;
+}) {
+  const [view, setView] = useState<'kanban' | 'list'>('kanban');
+  const [filter, setFilter] = useState('');
+
+  const filtered = orders.filter((o) =>
+    !filter ||
+    o.number.toLowerCase().includes(filter.toLowerCase()) ||
+    o.client.name.toLowerCase().includes(filter.toLowerCase()) ||
+    o.vehicle.plate.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  return (
+    <div className="flex h-full flex-col p-6 lg:p-8 animate-fade-in">
+      {/* Header controls */}
+      <div className="mb-6 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="seg">
+            <button aria-pressed={view === 'kanban'} onClick={() => setView('kanban')}><Icon name="columns" size={14} /> Kanban</button>
+            <button aria-pressed={view === 'list'} onClick={() => setView('list')}><Icon name="list" size={14} /> Lista</button>
+          </div>
+          <div className="relative">
+            <Icon name="search" size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-4" />
+            <input
+              className="field h-[30px] w-64 pl-8 text-[13px]"
+              placeholder="Filtrar OT, cliente, patente…"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button className="btn btn-secondary btn-sm"><Icon name="refresh" size={14} /> Actualizar</button>
+        </div>
+      </div>
+
+      {view === 'kanban' ? (
+        <div className="flex min-h-0 flex-1 gap-6 overflow-x-auto pb-4">
+          {PHASES.map((phase) => (
+            <div key={phase.id} className="flex flex-col gap-3">
+              <div className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-fg-3">{phase.label}</div>
+              <div className="flex min-h-0 flex-1 gap-4">
+                {phase.statuses.map((status) => {
+                  const colOrders = filtered.filter((o) => o.status === status);
+                  const cfg = statusConfig[status];
+                  return (
+                    <div key={status} className="flex w-[300px] shrink-0 flex-col rounded-xl bg-lane p-1.5" style={{ minWidth: 280 }}>
+                      <div className="mb-2 flex items-center justify-between px-2 pt-2 pb-1">
+                        <div className="flex items-center gap-2">
+                          <div className="h-2 w-2 rounded-full" style={{ background: cfg.color }} />
+                          <div className="text-[13px] font-semibold text-fg leading-none">{cfg.label}</div>
+                        </div>
+                        <div className="font-mono text-[12px] font-medium text-fg-3">{colOrders.length}</div>
+                      </div>
+                      <div className="flex flex-col gap-2 overflow-y-auto px-1 pb-1">
+                        {colOrders.map((ot) => <KanbanCard key={ot.id} ot={ot} onClick={() => onOpenOtChange(ot.id)} />)}
+                        {colOrders.length === 0 && (
+                          <div className="rounded-lg border border-dashed border-line-strong bg-surface-2 p-6 text-center text-[12px] text-fg-4">
+                            Sin órdenes
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="card min-h-0 flex-1 overflow-auto">
+          <table className="w-full text-left text-[13px]">
+            <thead className="sticky top-0 bg-surface z-10 shadow-e0">
+              <tr className="font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-fg-3">
+                <th className="px-5 py-3">OT #</th>
+                <th className="px-5 py-3">Cliente</th>
+                <th className="px-5 py-3">Vehículo</th>
+                <th className="px-5 py-3">Técnico</th>
+                <th className="px-5 py-3">Estado</th>
+                <th className="px-5 py-3 text-right">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((ot) => (
+                <tr key={ot.id} onClick={() => onOpenOtChange(ot.id)} className="row-hover cursor-pointer border-b border-line last:border-0">
+                  <td className="px-5 py-3 font-mono font-medium text-fg-2">{shortOT(ot.number)}</td>
+                  <td className="px-5 py-3 font-medium">{ot.client.name}</td>
+                  <td className="px-5 py-3 text-fg-2">{ot.vehicle.make} {ot.vehicle.model} · <Plate value={ot.vehicle.plate} /></td>
+                  <td className="px-5 py-3 text-fg-2">{ot.technicianName.split(' ')[0]}</td>
+                  <td className="px-5 py-3"><StatusBadge status={ot.status} /></td>
+                  <td className="px-5 py-3 text-right font-mono font-medium tnum">{money(ot.total)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {openOtId && (
+        <OTDrawer
+          ot={orders.find((o) => o.id === openOtId)!}
+          onClose={() => onOpenOtChange(null)}
+          onUpdate={(ot) => setOrders(orders.map((o) => (o.id === ot.id ? ot : o)))}
+          role={role}
+        />
+      )}
+    </div>
+  );
+}
