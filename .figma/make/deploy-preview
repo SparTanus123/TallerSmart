@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Build in development mode to emit sourcemaps.
-pnpm run build --mode development
+# Build in production mode to create optimized files.
+pnpm run build --mode production
 figma make deploy-preview --build-dir dist
