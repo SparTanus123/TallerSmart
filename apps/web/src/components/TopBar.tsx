@@ -6,9 +6,9 @@ import { Icon } from '@/components/ui/Icon';
 
 const VIEW_LABELS: Record<string, string> = {
   '/': 'Dashboard',
-  '/work-orders': '”rdenes de Trabajo',
-  '/clients': 'Clientes y VehÌculos',
-  '/catalog': 'Cat·logo',
+  '/work-orders': '√ìrdenes de Trabajo',
+  '/clients': 'Clientes y Veh√≠culos',
+  '/catalog': 'Cat√°logo',
   '/ai': 'Asistente IA',
   '/architecture': 'Arquitectura',
 };
@@ -20,7 +20,7 @@ export default function TopBar() {
   // Find the closest title match for the pathname (or default to dashboard)
   let title = VIEW_LABELS[pathname];
   if (!title) {
-    if (pathname.startsWith('/work-orders')) title = '”rdenes de Trabajo';
+    if (pathname.startsWith('/work-orders')) title = '√ìrdenes de Trabajo';
     else title = 'TallerSmart';
   }
 
@@ -41,7 +41,7 @@ export default function TopBar() {
 
       <div className="flex items-center gap-3">
         {/* Mock AI Status */}
-        <div className="flex items-center gap-2 px-2" title="Motor IA en lÌnea">
+        <div className="flex items-center gap-2 px-2" title="Motor IA en l√≠nea">
           <span className="relative flex h-2 w-2">
             <span className="absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75 animate-breathe" />
             <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-500" />
@@ -56,7 +56,7 @@ export default function TopBar() {
         {role !== 'technician' && (
           <button onClick={() => setReceptionOpen(true)} className="btn btn-primary ml-2 h-8">
             <Icon name="plus" size={16} />
-            Nueva RecepciÛn
+            Nueva Recepci√≥n
           </button>
         )}
       </div>

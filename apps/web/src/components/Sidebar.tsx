@@ -8,11 +8,11 @@ import { Avatar } from '@/components/ui/primitives';
 
 const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: IconName }[] }[] = [
   {
-    label: 'Operación',
+    label: 'OperaciÃ³n',
     items: [
       { href: '/', label: 'Dashboard', icon: 'dashboard' },
-      { href: '/work-orders', label: 'Órdenes de Trabajo', icon: 'board' },
-      { href: '/clients', label: 'Clientes y Vehículos', icon: 'car' },
+      { href: '/work-orders', label: 'Ã“rdenes de Trabajo', icon: 'board' },
+      { href: '/clients', label: 'Clientes y VehÃ­culos', icon: 'car' },
     ],
   },
   {
@@ -20,9 +20,9 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: I
     items: [{ href: '/ai', label: 'Asistente IA', icon: 'spark' }],
   },
   {
-    label: 'Gestión',
+    label: 'GestiÃ³n',
     items: [
-      { href: '/catalog', label: 'Catálogo', icon: 'catalog' },
+      { href: '/catalog', label: 'CatÃ¡logo', icon: 'catalog' },
     ],
   },
 ];
@@ -30,7 +30,7 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: I
 const ROLES: { id: "admin" | "advisor" | "technician"; label: string }[] = [
   { id: 'admin', label: 'Admin' },
   { id: 'advisor', label: 'Asesor' },
-  { id: 'technician', label: 'Técnico' },
+  { id: 'technician', label: 'TÃ©cnico' },
 ];
 
 function Logo() {
@@ -74,7 +74,7 @@ export default function Sidebar({
         {!collapsed && (
           <div className="min-w-0 animate-fade-in">
             <div className="text-[15px] font-semibold leading-none tracking-[-0.01em] text-[#F8FAFC]">TallerSmart</div>
-            <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#64748B]">Workshop OS · Beta</div>
+            <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#64748B]">Workshop OS Â· Beta</div>
           </div>
         )}
       </div>

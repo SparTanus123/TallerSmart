@@ -1,136 +1,50 @@
-# 🚗 TallerSmart
+# TallerSmart — Proyecto I
 
-![TallerSmart Banner](https://via.placeholder.com/1200x400?text=TallerSmart) *(Opcional: Añade aquí un banner o logo del proyecto)*
+TallerSmart es una demostración web para documentar y seguir órdenes de trabajo de un taller automotriz. El alcance de Proyecto I es un flujo principal completo: recepción → diagnóstico/ejecución → informe revisado y aprobado → entrega.
 
-**TallerSmart** es una plataforma web integral diseñada para digitalizar y optimizar la gestión de talleres automotrices. Su objetivo es centralizar la información de clientes, vehículos, órdenes de trabajo, inventario de repuestos y costos, integrando además **Inteligencia Artificial** para agilizar tareas como la clasificación de solicitudes, el resumen de historiales de mantenimiento y la preparación de informes de entrega.
+La aplicación no reemplaza el diagnóstico del mecánico. La clasificación por palabras clave, las reglas de intervalo y el borrador del informe son mecanismos deterministas. La pantalla del asistente usa respuestas de ejemplo; no constituye una integración de IA evaluada.
 
-🌍 **Despliegue (entorno público):** [https://tallersmart.vercel.app/](https://tallersmart.vercel.app/)
+## Estado del entregable
 
----
+- **Demostración web:** Next.js con datos iniciales de ejemplo; las órdenes creadas y sus cambios se guardan en `localStorage` del navegador.
+- **Persistencia de demo:** disponible tras recargar en el mismo navegador/perfil. No sincroniza entre usuarios ni equipos.
+- **API:** Express todavía es un esqueleto de salud, sin endpoints de negocio.
+- **Modelo objetivo:** PostgreSQL + Prisma, descrito en `apps/api/prisma/schema.prisma`; pendiente de validar, migrar y conectar a la API.
+- **Arquitectura, flujo, permisos y criterios de aceptación:** `docs/arquitectura-proyecto-i.md`.
 
-## ✨ Características Principales
+## Ejecutar localmente
 
-- 👥 **Gestión de Clientes y Vehículos**: Registro detallado de clientes y la flota de vehículos que ingresan al taller.
-- 📋 **Órdenes de Trabajo**: Seguimiento completo de cada reparación, desde el diagnóstico hasta la entrega.
-- ⚙️ **Repuestos y Costos**: Control de inventario de repuestos, registro de gastos y facturación.
-- 🕒 **Historial de Mantenimiento**: Registro inmutable de todas las intervenciones realizadas a cada vehículo.
-- 🤖 **Integración con IA**:
-  - Clasificación automática de solicitudes y síntomas reportados por los clientes.
-  - Resumen inteligente de historiales de vehículos complejos.
-  - Generación automática de informes de entrega y recomendaciones futuras.
+Requisitos: Node.js 20+, pnpm 9+.
 
----
-
-## 🛠️ Stack Tecnológico
-
-El proyecto está estructurado como un **monorepo** (utilizando `pnpm workspaces`) y emplea las siguientes tecnologías:
-
-### Frontend (`apps/web`)
-- [Next.js 15](https://nextjs.org/) (App Router, React 19)
-- [Tailwind CSS v4](https://tailwindcss.com/)
-- [TypeScript](https://www.typescriptlang.org/)
-
-### Backend (`apps/api`)
-- [Node.js](https://nodejs.org/) & [Express](https://expressjs.com/)
-- [Prisma](https://www.prisma.io/) (ORM)
-- [Zod](https://zod.dev/) (Validación de esquemas)
-- [TypeScript](https://www.typescriptlang.org/)
-
-### Base de Datos & Infraestructura
-- [PostgreSQL](https://www.postgresql.org/)
-- [Docker](https://www.docker.com/) & Docker Compose
-
----
-
-## 🏗️ Estructura del Proyecto
-
-```text
-Proyecto de Ing 1/
-├── apps/
-│   ├── api/       # Backend (Node.js, Express, Prisma)
-│   └── web/       # Frontend (Next.js, Tailwind CSS)
-├── packages/
-│   ├── config/    # Configuraciones compartidas (ESLint, TS, etc.)
-│   └── types/     # Tipos e interfaces de TypeScript compartidos
-├── docker-compose.yml # Configuración de servicios locales (PostgreSQL)
-├── package.json   # Dependencias globales y scripts del workspace
-└── pnpm-workspace.yaml
+```bash
+pnpm install
+pnpm --filter web dev
 ```
 
----
+La web estará disponible en <http://localhost:3000>. Para producción local:
 
-## 🚀 Empezando (Getting Started)
+```bash
+pnpm --filter web build
+pnpm --filter web start
+```
 
-### Prerrequisitos
+## Recorrido de demostración
 
-Asegúrate de tener instalados los siguientes programas en tu máquina local:
-- [Node.js](https://nodejs.org/es/) (v20 o superior recomendado)
-- [pnpm](https://pnpm.io/es/) (v9+)
-- [Docker](https://www.docker.com/) Desktop (para levantar la base de datos)
+1. En el Dashboard, pulsa **Registrar Nueva Recepción**.
+2. Escribe el motivo de ingreso y crea la orden. La recepción de esta versión usa un vehículo y cliente de ejemplo.
+3. Abre la orden desde **Órdenes de Trabajo**. Registra y guarda el diagnóstico del mecánico y el trabajo ejecutado. Avanza por los estados; desde diagnóstico o en proceso puedes elegir **Esperar repuestos** y luego regresar a ejecución.
+4. En **Asistente IA**, genera el borrador determinista, revísalo y pulsa **Aprobar informe**.
+5. Completa la orden y entrégala. La sección **Trazabilidad de la orden** muestra creación, cambios de estado y aprobación.
+6. Recarga la página: la orden y su historial deben seguir en el mismo navegador.
 
-### Instalación y Ejecución Local
+El navegador puede borrar los datos locales desde la configuración del sitio. No se deben introducir datos personales reales en esta demo.
 
-1. **Clonar el repositorio**
-   ```bash
-   git clone <url-del-repositorio>
-   cd "Proyecto de Ing 1"
-   ```
+## Validar el modelo Prisma
 
-2. **Instalar dependencias**
-   ```bash
-   pnpm install
-   ```
+Con dependencias instaladas y una variable `DATABASE_URL` configurada:
 
-3. **Configurar Variables de Entorno**
-   - En `apps/api`, copia el archivo `.env.example` a `.env`:
-     ```bash
-     cp apps/api/.env.example apps/api/.env
-     ```
-   - *Nota: Asegúrate de que `DATABASE_URL` en el archivo `.env` apunte a tu instancia local.*
+```bash
+pnpm --filter @tallersmart/api exec prisma validate --schema prisma/schema.prisma
+```
 
-4. **Levantar la Base de Datos (PostgreSQL)**
-   ```bash
-   docker-compose up -d db
-   ```
-
-5. **Ejecutar migraciones de Prisma**
-   (Una vez que el esquema de base de datos esté definido):
-   ```bash
-   cd apps/api
-   npx prisma db push
-   ```
-
-6. **Iniciar el entorno de desarrollo**
-   Vuelve a la raíz del proyecto para levantar el frontend o levanta ambas aplicaciones por separado:
-   ```bash
-   # Para levantar el entorno web desde la raíz
-   pnpm dev
-   ```
-   *Para probar el backend:*
-   - **API**: `cd apps/api && pnpm dev` (correrá en http://localhost:3001)
-
----
-
-## 📜 Scripts Útiles del Workspace
-
-Desde la raíz del proyecto puedes utilizar:
-
-- `pnpm dev`: Inicia el modo de desarrollo de la app Web.
-- `pnpm build`: Compila la aplicación Web para producción.
-- `pnpm start`: Inicia la aplicación en modo de producción.
-- `pnpm lint`: Ejecuta el linter.
-
----
-
-## 🤝 Contribuir
-
-1. Crea una rama para tu feature (`git checkout -b feature/NuevaCaracteristica`)
-2. Haz commit de tus cambios (`git commit -m 'Añade una nueva característica'`)
-3. Haz push a la rama (`git push origin feature/NuevaCaracteristica`)
-4. Abre un Pull Request
-
----
-
-## 📄 Licencia
-
-Este proyecto está bajo la Licencia MIT - mira el archivo [LICENSE](LICENSE) para más detalles.
+La validación del esquema no crea la base ni ejecuta migraciones.

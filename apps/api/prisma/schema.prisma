@@ -1,0 +1,176 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  ADVISOR
+  TECHNICIAN
+}
+
+enum ClientType {
+  PERSONAL
+  COMPANY
+}
+
+enum CatalogItemType {
+  SERVICE
+  PART
+}
+
+enum WorkOrderStatus {
+  RECEIVED
+  DIAGNOSING
+  IN_PROGRESS
+  WAITING_PARTS
+  COMPLETED
+  DELIVERED
+}
+
+enum UrgencyLevel {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum AuthorizationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id             String          @id @default(uuid()) @db.Uuid
+  name           String
+  email          String          @unique
+  passwordHash   String          @map("password_hash")
+  role           UserRole        @default(ADVISOR)
+  active         Boolean         @default(true)
+  createdAt      DateTime        @default(now()) @map("created_at")
+  updatedAt      DateTime        @updatedAt @map("updated_at")
+  assignedOrders WorkOrder[]     @relation("TechnicianOrders")
+  createdOrders  WorkOrder[]     @relation("CreatedOrders")
+  approvedReports WorkOrder[]    @relation("ReportApprover")
+  auditEvents    WorkOrderEvent[]
+
+  @@map("users")
+}
+
+model Client {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String
+  phone     String
+  email     String?
+  type      ClientType @default(PERSONAL)
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @updatedAt @map("updated_at")
+  vehicles  Vehicle[]
+  orders    WorkOrder[]
+
+  @@map("clients")
+}
+
+model Vehicle {
+  id              String      @id @default(uuid()) @db.Uuid
+  currentClientId String      @map("current_client_id") @db.Uuid
+  plate           String      @unique
+  vin             String?     @unique
+  make            String
+  model           String
+  year            Int
+  mileage         Int
+  color           String?
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+  currentClient   Client      @relation(fields: [currentClientId], references: [id], onDelete: Restrict)
+  orders          WorkOrder[]
+
+  @@index([currentClientId])
+  @@map("vehicles")
+}
+
+model CatalogItem {
+  id          String          @id @default(uuid()) @db.Uuid
+  type        CatalogItemType
+  code        String          @unique
+  name        String
+  description String?
+  unitPrice   Decimal         @map("unit_price") @db.Decimal(12, 2)
+  unit        String          @default("unidad")
+  active      Boolean         @default(true)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  orderItems  WorkOrderItem[]
+
+  @@map("catalog_items")
+}
+
+model WorkOrder {
+  id                    String           @id @default(uuid()) @db.Uuid
+  number                String           @unique
+  vehicleId             String           @map("vehicle_id") @db.Uuid
+  clientId              String           @map("client_id") @db.Uuid
+  technicianId          String?          @map("technician_id") @db.Uuid
+  createdById           String           @map("created_by_id") @db.Uuid
+  reportApprovedById    String?          @map("report_approved_by_id") @db.Uuid
+  status                WorkOrderStatus  @default(RECEIVED)
+  urgency               UrgencyLevel     @default(MEDIUM)
+  complaint             String
+  diagnosis             String?
+  notes                 String?
+  mileageIn             Int              @map("mileage_in")
+  mileageOut            Int?             @map("mileage_out")
+  estimatedDelivery     DateTime?        @map("estimated_delivery") @db.Date
+  total                 Decimal          @default(0) @db.Decimal(12, 2)
+  deliveryReportDraft   String?          @map("delivery_report_draft")
+  reportApprovedAt      DateTime?        @map("report_approved_at")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+  vehicle               Vehicle          @relation(fields: [vehicleId], references: [id], onDelete: Restrict)
+  client                Client           @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  technician            User?            @relation("TechnicianOrders", fields: [technicianId], references: [id], onDelete: SetNull)
+  createdBy             User             @relation("CreatedOrders", fields: [createdById], references: [id], onDelete: Restrict)
+  reportApprovedBy      User?            @relation("ReportApprover", fields: [reportApprovedById], references: [id], onDelete: SetNull)
+  items                 WorkOrderItem[]
+  events                WorkOrderEvent[]
+
+  @@index([status, createdAt])
+  @@index([vehicleId, createdAt])
+  @@map("work_orders")
+}
+
+model WorkOrderItem {
+  id                     String               @id @default(uuid()) @db.Uuid
+  workOrderId            String               @map("work_order_id") @db.Uuid
+  catalogItemId          String?              @map("catalog_item_id") @db.Uuid
+  type                   CatalogItemType
+  nameSnapshot           String               @map("name_snapshot")
+  quantity               Decimal              @default(1) @db.Decimal(10, 2)
+  unitPrice              Decimal              @map("unit_price") @db.Decimal(12, 2)
+  authorizationStatus    AuthorizationStatus  @default(PENDING) @map("authorization_status")
+  authorizedAt           DateTime?             @map("authorized_at")
+  createdAt              DateTime              @default(now()) @map("created_at")
+  workOrder              WorkOrder             @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  catalogItem            CatalogItem?          @relation(fields: [catalogItemId], references: [id], onDelete: SetNull)
+
+  @@map("work_order_items")
+}
+
+model WorkOrderEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  workOrderId String    @map("work_order_id") @db.Uuid
+  actorId     String?   @map("actor_id") @db.Uuid
+  action      String
+  fromValue   Json?     @map("from_value")
+  toValue     Json?     @map("to_value")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  actor       User?     @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([workOrderId, createdAt])
+  @@map("work_order_events")
+}

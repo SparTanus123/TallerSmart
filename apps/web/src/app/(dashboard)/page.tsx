@@ -5,7 +5,7 @@ import { useGlobal } from '@/lib/context';
 import { useRouter } from 'next/navigation';
 
 export default function DashboardPage() {
-  const { orders, setOrders, role, persona, setReceptionOpen } = useGlobal();
+  const { orders, role, persona, setReceptionOpen } = useGlobal();
   const router = useRouter();
 
   return (
@@ -14,8 +14,7 @@ export default function DashboardPage() {
       role={role} 
       persona={persona} 
       onOpenOrder={(id) => router.push(`/work-orders/${id}`)} 
-      onNewReception={() => setReceptionOpen(true)} 
-      onOrdersChange={setOrders} 
-    />
+      onNewReception={() => setReceptionOpen(true)}
+      />
   );
 }
