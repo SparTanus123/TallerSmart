@@ -1,5 +1,6 @@
 "use client" /* Header */ /* Content */ /* AI Summary Card */ /* Grid */ /* Footer / Actions */
 import { useEffect, useState } from "react"
+import Image from "next/image"
 import type { UserRole, WorkOrder } from "@/types"
 import {
   money,
@@ -30,7 +31,7 @@ export default function OTDrawer({
   onUpdate: (ot: WorkOrder) => void
   role: UserRole
 }) {
-  const { refreshOrders } = useGlobal()
+  const { refreshOrders, uploadIntakePhotos } = useGlobal()
   const [tab, setTab] = useState<"resumen" | "items" | "ia">("resumen")
   const [catalog, setCatalog] = useState<{ id: string; type: "SERVICE" | "PART"; name: string; code: string }[]>([])
   const [catalogId, setCatalogId] = useState("")
@@ -225,7 +226,7 @@ export default function OTDrawer({
                 </ol>
               </div>
             ) : null}
-            {ot.intakeInspection && <div className="card p-4"><div className="eyebrow mb-3">Inspección de recepción</div><div className="grid gap-2 text-sm sm:grid-cols-2"><p><span className="text-fg-3">Combustible:</span> {ot.intakeInspection.fuelLevel}%</p><p><span className="text-fg-3">Pertenencias:</span> {ot.intakeInspection.belongings.join(", ") || "Ninguna declarada"}</p><p className="sm:col-span-2"><span className="text-fg-3">Daños previos:</span> {ot.intakeInspection.damageAreas.join(", ") || "Sin daños marcados"}</p>{ot.intakeInspection.notes && <p className="sm:col-span-2 whitespace-pre-wrap"><span className="text-fg-3">Detalle:</span> {ot.intakeInspection.notes}</p>}</div></div>}
+            {(ot.intakeInspection || ot.intakePhotos?.length || (editable && canAuthorize)) && <div className="card p-4"><div className="eyebrow mb-3">Inspección de recepción</div>{ot.intakeInspection && <div className="grid gap-2 text-sm sm:grid-cols-2"><p><span className="text-fg-3">Combustible:</span> {ot.intakeInspection.fuelLevel}%</p><p><span className="text-fg-3">Pertenencias:</span> {ot.intakeInspection.belongings.join(", ") || "Ninguna declarada"}</p><p className="sm:col-span-2"><span className="text-fg-3">Daños previos:</span> {ot.intakeInspection.damageAreas.join(", ") || "Sin daños marcados"}</p>{ot.intakeInspection.notes && <p className="sm:col-span-2 whitespace-pre-wrap"><span className="text-fg-3">Detalle:</span> {ot.intakeInspection.notes}</p>}</div>}{Boolean(ot.intakePhotos?.length) && <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">{ot.intakePhotos?.map(photo => <figure key={photo.id} className="relative overflow-hidden rounded-lg border border-line"><Image unoptimized width={480} height={360} className="h-36 w-full object-cover" src={`/api/v1/work-orders/${ot.id}/intake-photos/${photo.id}`} alt={`Inspección: ${photo.fileName}`}/><figcaption className="truncate px-2 py-1 text-[11px] text-fg-3">{photo.fileName}</figcaption>{canAuthorize && editable && <button className="absolute right-1 top-1 rounded bg-white/90 px-2 py-1 text-xs text-red-700 shadow" onClick={() => void changeLine(() => api.deleteIntakePhoto(ot.id, photo.id))}>Quitar</button>}</figure>)}</div>}{canAuthorize && editable && <label className="mt-4 block text-xs text-fg-3">Adjuntar fotos de inspección<input className="field mt-1 w-full py-2" type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => { const files = Array.from(e.target.files ?? []); if (files.some(f => f.size > 5 * 1024 * 1024) || files.reduce((s,f) => s + f.size, 0) > 5 * 1024 * 1024 || files.some(f => !["image/jpeg","image/png","image/webp"].includes(f.type))) { setLineError("Imágenes JPG, PNG o WebP hasta 5 MB en total."); e.target.value = ""; return } if (files.length) void changeLine(() => uploadIntakePhotos(ot.id, files)); e.target.value = "" }}/></label>}</div>}
             {}{" "}
             <div className="grid grid-cols-2 gap-4">
               {" "}

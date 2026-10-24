@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { Router, type Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../lib/prisma';
@@ -8,7 +10,35 @@ import { allowedTransitions, getWorkOrder, listWorkOrders, workOrderInclude } fr
 
 const router = Router();
 const actor = (res: Response) => (res.locals.user as { id: string }).id;
+const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? path.join(process.cwd(), 'storage', 'uploads'));
 router.get('/', async (_req, res, next) => { try { res.json(await listWorkOrders()); } catch (e) { next(e); } });
+router.post('/:id/intake-photos', requireRoles('ADMIN', 'ADVISOR'), async (req, res, next) => {
+  try {
+    const { fileName, mimeType, base64 } = z.object({ fileName: z.string().trim().min(1).max(180), mimeType: z.enum(['image/jpeg', 'image/png', 'image/webp']), base64: z.string().min(1) }).parse(req.body);
+    const content = Buffer.from(base64, 'base64');
+    if (!content.length || content.length > 5 * 1024 * 1024) return res.status(413).json({ error: 'PHOTO_TOO_LARGE' });
+    const signatureValid = mimeType === 'image/jpeg' ? content[0] === 0xff && content[1] === 0xd8 && content[2] === 0xff : mimeType === 'image/png' ? content.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a])) : content.toString('ascii', 0, 4) === 'RIFF' && content.toString('ascii', 8, 12) === 'WEBP';
+    if (!signatureValid) return res.status(400).json({ error: 'INVALID_IMAGE_CONTENT' });
+    const actorId = actor(res); const order = await prisma.workOrder.findUniqueOrThrow({ where: { id: req.params.id } });
+    if (order.status === 'DELIVERED') return res.status(409).json({ error: 'DELIVERED_ORDER_LOCKED' });
+    const key = `${randomUUID()}.${mimeType === 'image/jpeg' ? 'jpg' : mimeType === 'image/png' ? 'png' : 'webp'}`;
+    await mkdir(uploadDir, { recursive: true }); await writeFile(path.join(uploadDir, key), content, { flag: 'wx' });
+    try {
+      const photo = await prisma.$transaction(async tx => {
+        const row = await tx.intakePhoto.create({ data: { workOrderId: order.id, fileName: path.basename(fileName), mimeType, storageKey: key } });
+        await tx.workOrderEvent.create({ data: { workOrderId: order.id, actorId, action: 'intake_photo_added', toValue: { photoId: row.id, fileName: row.fileName, mimeType } } });
+        return row;
+      });
+      res.status(201).json({ id: photo.id, fileName: photo.fileName, mimeType: photo.mimeType, createdAt: photo.createdAt });
+    } catch (e) { await unlink(path.join(uploadDir, key)).catch(() => undefined); throw e; }
+  } catch (e) { next(e); }
+});
+router.get('/:id/intake-photos/:photoId', async (req, res, next) => {
+  try { const photo = await prisma.intakePhoto.findFirstOrThrow({ where: { id: req.params.photoId, workOrderId: req.params.id } }); const content = await readFile(path.join(uploadDir, photo.storageKey)); res.setHeader('Content-Type', photo.mimeType); res.setHeader('Content-Disposition', `inline; filename="${photo.fileName.replace(/["\\\r\n]/g, '_')}"`); res.setHeader('Cache-Control', 'private, no-store'); res.send(content); } catch (e) { next(e); }
+});
+router.delete('/:id/intake-photos/:photoId', requireRoles('ADMIN', 'ADVISOR'), async (req, res, next) => {
+  try { const actorId = actor(res); const photo = await prisma.intakePhoto.findFirstOrThrow({ where: { id: req.params.photoId, workOrderId: req.params.id } }); await prisma.$transaction(async tx => { await tx.intakePhoto.delete({ where: { id: photo.id } }); await tx.workOrderEvent.create({ data: { workOrderId: req.params.id, actorId, action: 'intake_photo_removed', fromValue: { photoId: photo.id, fileName: photo.fileName } } }); }); await unlink(path.join(uploadDir, photo.storageKey)).catch(() => undefined); res.status(204).end(); } catch (e) { next(e); }
+});
 router.post('/', requireRoles('ADMIN', 'ADVISOR'), async (req, res, next) => {
   try {
     const input = createWorkOrderSchema.parse(req.body);

@@ -20,7 +20,8 @@ interface GlobalState {
   refreshDirectory: () => Promise<void>
   createClient: (input: { name: string; phone: string; email?: string; type: "PERSONAL" | "COMPANY" }) => Promise<void>
   createVehicle: (input: { currentClientId: string; plate: string; make: string; model: string; year: number; mileage: number; vin?: string; color?: string }) => Promise<void>
-  createOrder: (input: { vehicleId: string; complaint: string; mileageIn: number; estimatedDelivery: string; intakeInspection: IntakeInspection }) => Promise<void>
+  createOrder: (input: { vehicleId: string; complaint: string; mileageIn: number; estimatedDelivery: string; intakeInspection: IntakeInspection; photos: File[] }) => Promise<void>
+  uploadIntakePhotos: (workOrderId: string, photos: File[]) => Promise<void>
   updateOrder: (order: WorkOrder) => Promise<void>
   receptionOpen: boolean
   setReceptionOpen: (open: boolean) => void
@@ -35,7 +36,7 @@ type ApiClient = { id: string; name: string; phone: string; email: string | null
 type ApiVehicle = { id: string; currentClientId: string; plate: string; vin: string | null; make: string; model: string; year: number; mileage: number; color: string | null }
 type ApiEvent = { id: string; action: string; createdAt: string; fromValue: unknown; toValue: unknown; actor: { name: string } | null }
 type ApiItem = { id: string; type: string; nameSnapshot: string; quantity: string | number; unitPrice: string | number; authorizationStatus: "PENDING" | "APPROVED" | "REJECTED" }
-type ApiWorkOrder = { id: string; number: string; status: string; urgency: string; client: ApiClient; vehicle: ApiVehicle; technicianId: string | null; technician: { name: string } | null; complaint: string; diagnosis: string | null; notes: string | null; items: ApiItem[]; total: string | number; createdAt: string; updatedAt: string; estimatedDelivery: string | null; mileageIn: number; mileageOut: number | null; intakeInspection: IntakeInspection | null; events: ApiEvent[]; deliveryReportDraft: string | null; approvedReportSnapshot: string | null; reportApprovedAt: string | null; reportApprovedBy: { name: string } | null }
+type ApiWorkOrder = { id: string; number: string; status: string; urgency: string; client: ApiClient; vehicle: ApiVehicle; technicianId: string | null; technician: { name: string } | null; complaint: string; diagnosis: string | null; notes: string | null; items: ApiItem[]; total: string | number; createdAt: string; updatedAt: string; estimatedDelivery: string | null; mileageIn: number; mileageOut: number | null; intakeInspection: IntakeInspection | null; intakePhotos?: { id: string; fileName: string; mimeType: string; createdAt: string }[]; events: ApiEvent[]; deliveryReportDraft: string | null; approvedReportSnapshot: string | null; reportApprovedAt: string | null; reportApprovedBy: { name: string } | null }
 function asObject(value: unknown): Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value) ? value as Record<string, unknown> : {} }
 function toOrder(row: ApiWorkOrder): WorkOrder {
   const clientRow = row.client ?? {}
@@ -48,7 +49,7 @@ function toOrder(row: ApiWorkOrder): WorkOrder {
     items: (row.items ?? []).map((i) => ({ id: i.id, type: lower(i.type) as "service" | "part", name: i.nameSnapshot, quantity: Number(i.quantity), unitPrice: Number(i.unitPrice), subtotal: Number(i.quantity) * Number(i.unitPrice), authorizationStatus: i.authorizationStatus })),
     total: Number(row.total), createdAt: row.createdAt, updatedAt: row.updatedAt, estimatedDelivery: row.estimatedDelivery?.slice?.(0, 10) ?? "", mileageIn: row.mileageIn, mileageOut: row.mileageOut ?? undefined,
     auditLog: (row.events ?? []).map((e) => { const from = asObject(e.fromValue); const to = asObject(e.toValue); return { id: e.id, action: e.action as NonNullable<WorkOrder["auditLog"]>[number]["action"], actor: e.actor?.name ?? "Sistema", at: e.createdAt, fromStatus: typeof from.status === "string" ? from.status.toLowerCase() as WorkOrder["status"] : undefined, toStatus: typeof to.status === "string" ? to.status.toLowerCase() as WorkOrder["status"] : undefined, details: typeof to.diagnosis === "string" ? ["diagnóstico y notas"] : undefined } }),
-    intakeInspection: row.intakeInspection ?? undefined, deliveryReportDraft: row.deliveryReportDraft ?? undefined, approvedReportSnapshot: row.approvedReportSnapshot ?? undefined, reportApprovedAt: row.reportApprovedAt ?? undefined, reportApprovedBy: row.reportApprovedBy?.name ?? undefined,
+    intakeInspection: row.intakeInspection ?? undefined, intakePhotos: row.intakePhotos ?? [], deliveryReportDraft: row.deliveryReportDraft ?? undefined, approvedReportSnapshot: row.approvedReportSnapshot ?? undefined, reportApprovedAt: row.reportApprovedAt ?? undefined, reportApprovedBy: row.reportApprovedBy?.name ?? undefined,
   }
 }
 function toClient(row: ApiClient): Client { return { id: row.id, name: row.name, phone: row.phone, email: row.email ?? "", createdAt: row.createdAt, type: row.type === "COMPANY" ? "empresa" : "personal" } }
@@ -76,9 +77,11 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
   }, [loadDirectory, router])
   useEffect(() => { if (!user) return; const timer = window.setInterval(() => { if (document.visibilityState === "visible") void refreshOrders() }, 4000); return () => window.clearInterval(timer) }, [user, refreshOrders])
   const logout = useCallback(async () => { try { await api.logout() } finally { setUser(null); setOrders([]); router.replace("/login") } }, [router])
-  const createOrder = useCallback(async (input: { vehicleId: string; complaint: string; mileageIn: number; estimatedDelivery: string; intakeInspection: IntakeInspection }) => {
-    try { const created = await api.createWorkOrder({ ...input, urgency: "MEDIUM" }); setOrders(current => [toOrder(created as unknown as ApiWorkOrder), ...current.filter(o => o.id !== created.id)]); setApiError(null) } catch (e) { setApiError(e instanceof Error ? e.message : "No se pudo crear la orden"); throw e }
-  }, [])
+  const uploadIntakePhotos = useCallback(async (workOrderId: string, photos: File[]) => { for (const file of photos) { const dataUrl = await new Promise<string>((resolve, reject) => { const reader = new FileReader(); reader.onload = () => typeof reader.result === "string" ? resolve(reader.result) : reject(new Error("PHOTO_READ_FAILED")); reader.onerror = () => reject(new Error("PHOTO_READ_FAILED")); reader.readAsDataURL(file) }); await api.uploadIntakePhoto(workOrderId, { fileName: file.name, mimeType: file.type, base64: dataUrl.split(",")[1] ?? "" }) } await refreshOrders() }, [refreshOrders])
+  const createOrder = useCallback(async (input: { vehicleId: string; complaint: string; mileageIn: number; estimatedDelivery: string; intakeInspection: IntakeInspection; photos: File[] }) => {
+    const { photos, ...body } = input
+    try { const created = await api.createWorkOrder({ ...body, urgency: "MEDIUM" }); setOrders(current => [toOrder(created as unknown as ApiWorkOrder), ...current.filter(o => o.id !== created.id)]); setApiError(null); if (photos.length) try { await uploadIntakePhotos(String(created.id), photos) } catch (e) { setApiError(`Orden creada, pero no se guardaron todas las fotos (${e instanceof Error ? e.message : "error"}). Reintenta desde la orden.`) } } catch (e) { setApiError(e instanceof Error ? e.message : "No se pudo crear la orden"); throw e }
+  }, [uploadIntakePhotos])
   const createClient = useCallback(async (input: { name: string; phone: string; email?: string; type: "PERSONAL" | "COMPANY" }) => { await api.createClient(input); await loadDirectory() }, [loadDirectory])
   const createVehicle = useCallback(async (input: { currentClientId: string; plate: string; make: string; model: string; year: number; mileage: number; vin?: string; color?: string }) => { await api.createVehicle(input); await loadDirectory() }, [loadDirectory])
   const updateOrder = useCallback(async (updated: WorkOrder) => {
@@ -93,7 +96,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     } catch (e) { setApiError(e instanceof Error ? e.message : "No se pudo guardar el cambio"); await refreshOrders() }
   }, [orders, refreshOrders])
   const persona = user ? { name: user.name, label: PERSONAS[role].label } : PERSONAS[role]
-  return <GlobalContext.Provider value={{ role, user, authLoading, logout, orders, clients, vehicles, loading, apiError, refreshOrders, refreshDirectory, createClient, createVehicle, createOrder, updateOrder, receptionOpen, setReceptionOpen, paletteOpen, setPaletteOpen, persona }}>{children}</GlobalContext.Provider>
+  return <GlobalContext.Provider value={{ role, user, authLoading, logout, orders, clients, vehicles, loading, apiError, refreshOrders, refreshDirectory, createClient, createVehicle, createOrder, uploadIntakePhotos, updateOrder, receptionOpen, setReceptionOpen, paletteOpen, setPaletteOpen, persona }}>{children}</GlobalContext.Provider>
 }
 
 export function useGlobal() { const ctx = useContext(GlobalContext); if (!ctx) throw new Error("useGlobal must be used within GlobalProvider"); return ctx }

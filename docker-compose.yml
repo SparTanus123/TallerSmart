@@ -21,12 +21,16 @@ services:
       dockerfile: apps/api/Dockerfile
     ports:
       - "3001:3001"
+    volumes:
+      - api_uploads:/app/storage/uploads
     environment:
       DATABASE_URL: postgresql://postgres:password@db:5432/tallersmart?schema=public
       JWT_SECRET: ${JWT_SECRET:-TallerSmart-local-development-secret-change-before-deployment}
+      UPLOAD_DIR: /app/storage/uploads
     depends_on:
       db:
         condition: service_healthy
 
 volumes:
   postgres_data:
+  api_uploads:

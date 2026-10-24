@@ -49,6 +49,13 @@ export interface IntakeInspection {
   notes: string
 }
 
+export interface IntakePhoto {
+  id: string
+  fileName: string
+  mimeType: string
+  createdAt: string
+}
+
 export interface WorkOrderAuditEntry {
   id: string
   action: "created" | "status_changed" | "record_updated" | "report_approved" | "report_draft_updated" | "additional_work_requested" | "item_authorization_changed"
@@ -77,6 +84,7 @@ export interface WorkOrder {
   estimatedDelivery: string
   mileageIn: number
   intakeInspection?: IntakeInspection
+  intakePhotos?: IntakePhoto[]
   mileageOut?: number
   urgency: UrgencyLevel
   auditLog?: WorkOrderAuditEntry[]

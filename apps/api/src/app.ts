@@ -20,7 +20,7 @@ const originAllowed = (origin?: string) => {
   try { const { protocol, hostname } = new URL(origin); return ['http:', 'https:'].includes(protocol) && ['localhost', '127.0.0.1', '::1'].includes(hostname); } catch { return false; }
 };
 app.use(cors({ credentials: true, origin: (origin, callback) => originAllowed(origin) ? callback(null, true) : callback(new Error(`ORIGIN_NOT_ALLOWED: ${origin}`)) }));
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '7mb' }));
 app.get('/health', async (_req, res) => { try { await prisma.$queryRaw`SELECT 1`; res.json({ status: 'ok', service: 'api', database: 'connected' }); } catch { res.status(503).json({ status: 'error', service: 'api', database: 'unavailable' }); } });
 const api = express.Router();
 api.use('/auth', authRouter);

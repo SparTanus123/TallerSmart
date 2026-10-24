@@ -141,10 +141,24 @@ model WorkOrder {
   reportApprovedBy      User?            @relation("ReportApprover", fields: [reportApprovedById], references: [id], onDelete: SetNull)
   items                 WorkOrderItem[]
   events                WorkOrderEvent[]
+  intakePhotos          IntakePhoto[]
 
   @@index([status, createdAt])
   @@index([vehicleId, createdAt])
   @@map("work_orders")
+}
+
+model IntakePhoto {
+  id          String    @id @default(uuid()) @db.Uuid
+  workOrderId String    @map("work_order_id") @db.Uuid
+  fileName    String    @map("file_name")
+  mimeType    String    @map("mime_type")
+  storageKey  String    @unique @map("storage_key")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([workOrderId, createdAt])
+  @@map("intake_photos")
 }
 
 model WorkOrderItem {
