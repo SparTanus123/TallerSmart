@@ -17,6 +17,21 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  downloadWorkOrderDocument: async (id: string, type: "intake" | "quotation" | "delivery") => {
+    const response = await fetch(`${API_URL}/work-orders/${id}/documents/${type}`, { credentials: "include", cache: "no-store" })
+    if (!response.ok) {
+      const payload = await response.json().catch(() => ({}))
+      if (response.status === 401 && typeof window !== "undefined") window.location.assign("/login")
+      throw new Error(payload.error ?? `API_ERROR_${response.status}`)
+    }
+    const blob = await response.blob()
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.href = url
+    link.download = `${id}-${type}.pdf`
+    link.click()
+    URL.revokeObjectURL(url)
+  },
   login: (body: { email: string; password: string }) => request<{ user: { id: string; name: string; email: string; role: "ADMIN" | "ADVISOR" | "TECHNICIAN" } }>("/auth/login", { method: "POST", body: JSON.stringify(body) }),
   me: () => request<{ user: { id: string; name: string; email: string; role: "ADMIN" | "ADVISOR" | "TECHNICIAN" } }>("/auth/me"),
   logout: () => request<void>("/auth/logout", { method: "POST" }),

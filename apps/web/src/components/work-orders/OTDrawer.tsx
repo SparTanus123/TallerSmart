@@ -37,6 +37,8 @@ export default function OTDrawer({
   const [catalogId, setCatalogId] = useState("")
   const [lineError, setLineError] = useState("")
   const [lineBusy, setLineBusy] = useState(false)
+  const [documentBusy, setDocumentBusy] = useState(false)
+  const [documentError, setDocumentError] = useState("")
   const [manualLine, setManualLine] = useState(false)
   const canAuthorize = role === "admin" || role === "advisor"
   const editable = ot.status !== "completed" && ot.status !== "delivered"
@@ -137,6 +139,21 @@ export default function OTDrawer({
             <Icon name="x" size={20} />{" "}
           </button>{" "}
         </div>{" "}
+        <div className="mb-3 flex flex-wrap gap-2">
+          {([
+            ["intake", "Comprobante de ingreso"],
+            ["quotation", "Cotización"],
+            ["delivery", "Informe de entrega"],
+          ] as const).map(([type, label]) => (
+            <button key={type} className="btn btn-secondary btn-sm" disabled={documentBusy || (type === "delivery" && !approved)} title={type === "delivery" && !approved ? "Aprueba el informe técnico para generar la hoja de entrega" : undefined} onClick={async () => {
+              setDocumentBusy(true); setDocumentError("")
+              try { await api.downloadWorkOrderDocument(ot.id, type) }
+              catch (error) { setDocumentError(error instanceof Error ? error.message : "No se pudo generar el PDF") }
+              finally { setDocumentBusy(false) }
+            }}>{documentBusy ? "Generando…" : label}</button>
+          ))}
+          {documentError && <span role="alert" className="self-center text-[12px] text-red-600">{documentError}</span>}
+        </div>
         <div className="flex gap-6">
           {" "}
           {(["resumen", "items", "ia"] as const).map((t) => (
