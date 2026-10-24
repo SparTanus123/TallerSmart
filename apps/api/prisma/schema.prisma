@@ -51,6 +51,8 @@ model User {
   passwordHash   String          @map("password_hash")
   role           UserRole        @default(ADVISOR)
   active         Boolean         @default(true)
+  workshopId     String          @default("00000000-0000-4000-8000-000000000000") @map("workshop_id") @db.Uuid
+  workshop       Workshop        @relation(fields: [workshopId], references: [id], onDelete: Restrict)
   createdAt      DateTime        @default(now()) @map("created_at")
   updatedAt      DateTime        @updatedAt @map("updated_at")
   assignedOrders WorkOrder[]     @relation("TechnicianOrders")
@@ -68,6 +70,8 @@ model Client {
   phone     String
   email     String?
   type      ClientType @default(PERSONAL)
+  workshopId String   @default("00000000-0000-4000-8000-000000000000") @map("workshop_id") @db.Uuid
+  workshop  Workshop  @relation(fields: [workshopId], references: [id], onDelete: Restrict)
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   vehicles  Vehicle[]
@@ -86,6 +90,8 @@ model Vehicle {
   year            Int
   mileage         Int
   color           String?
+  workshopId      String      @default("00000000-0000-4000-8000-000000000000") @map("workshop_id") @db.Uuid
+  workshop        Workshop    @relation(fields: [workshopId], references: [id], onDelete: Restrict)
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
   currentClient   Client      @relation(fields: [currentClientId], references: [id], onDelete: Restrict)
@@ -105,6 +111,8 @@ model CatalogItem {
   unitPrice   Decimal         @map("unit_price") @db.Decimal(12, 2)
   unit        String          @default("unidad")
   active      Boolean         @default(true)
+  workshopId  String          @default("00000000-0000-4000-8000-000000000000") @map("workshop_id") @db.Uuid
+  workshop    Workshop        @relation(fields: [workshopId], references: [id], onDelete: Restrict)
   createdAt   DateTime        @default(now()) @map("created_at")
   orderItems  WorkOrderItem[]
 
@@ -129,6 +137,8 @@ model WorkOrder {
   mileageOut            Int?             @map("mileage_out")
   estimatedDelivery     DateTime?        @map("estimated_delivery") @db.Date
   total                 Decimal          @default(0) @db.Decimal(12, 2)
+  workshopId            String           @default("00000000-0000-4000-8000-000000000000") @map("workshop_id") @db.Uuid
+  workshop              Workshop         @relation(fields: [workshopId], references: [id], onDelete: Restrict)
   deliveryReportDraft   String?          @map("delivery_report_draft")
   approvedReportSnapshot String?         @map("approved_report_snapshot")
   reportApprovedAt      DateTime?        @map("report_approved_at")
@@ -154,6 +164,8 @@ model IntakePhoto {
   fileName    String    @map("file_name")
   mimeType    String    @map("mime_type")
   storageKey  String    @unique @map("storage_key")
+  workshopId  String    @default("00000000-0000-4000-8000-000000000000") @map("workshop_id") @db.Uuid
+  workshop    Workshop  @relation(fields: [workshopId], references: [id], onDelete: Restrict)
   createdAt   DateTime  @default(now()) @map("created_at")
   workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
@@ -170,6 +182,8 @@ model WorkOrderItem {
   quantity               Decimal              @default(1) @db.Decimal(10, 2)
   unitPrice              Decimal              @map("unit_price") @db.Decimal(12, 2)
   authorizationStatus    AuthorizationStatus  @default(PENDING) @map("authorization_status")
+  workshopId             String               @default("00000000-0000-4000-8000-000000000000") @map("workshop_id") @db.Uuid
+  workshop               Workshop             @relation(fields: [workshopId], references: [id], onDelete: Restrict)
   authorizedAt           DateTime?             @map("authorized_at")
   createdAt              DateTime              @default(now()) @map("created_at")
   workOrder              WorkOrder             @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
@@ -183,6 +197,8 @@ model WorkOrderEvent {
   workOrderId String    @map("work_order_id") @db.Uuid
   actorId     String?   @map("actor_id") @db.Uuid
   action      String
+  workshopId  String    @default("00000000-0000-4000-8000-000000000000") @map("workshop_id") @db.Uuid
+  workshop    Workshop  @relation(fields: [workshopId], references: [id], onDelete: Restrict)
   fromValue   Json?     @map("from_value")
   toValue     Json?     @map("to_value")
   createdAt   DateTime  @default(now()) @map("created_at")
@@ -198,6 +214,8 @@ model VehicleEvent {
   vehicleId String   @map("vehicle_id") @db.Uuid
   actorId   String?  @map("actor_id") @db.Uuid
   action    String
+  workshopId String  @default("00000000-0000-4000-8000-000000000000") @map("workshop_id") @db.Uuid
+  workshop  Workshop @relation(fields: [workshopId], references: [id], onDelete: Restrict)
   fromValue Json?    @map("from_value")
   toValue   Json?    @map("to_value")
   reason    String?
@@ -207,4 +225,20 @@ model VehicleEvent {
 
   @@index([vehicleId, createdAt])
   @@map("vehicle_events")
+}
+
+model Workshop {
+  id           String @id @default(uuid()) @db.Uuid
+  name         String
+  createdAt    DateTime @default(now()) @map("created_at")
+  users        User[]
+  clients      Client[]
+  vehicles     Vehicle[]
+  catalogItems CatalogItem[]
+  workOrders   WorkOrder[]
+  intakePhotos IntakePhoto[]
+  orderItems   WorkOrderItem[]
+  orderEvents  WorkOrderEvent[]
+  vehicleEvents VehicleEvent[]
+  @@map("workshops")
 }

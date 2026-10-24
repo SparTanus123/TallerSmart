@@ -1,6 +1,7 @@
 import type { RequestHandler } from 'express';
 import { sessionUser } from '../modules/auth/auth.service';
 import type { UserRole } from '@prisma/client';
+import { tenantContext } from '../lib/prisma';
 
 export const requireAuth: RequestHandler = async (req, res, next) => {
   try {
@@ -9,7 +10,7 @@ export const requireAuth: RequestHandler = async (req, res, next) => {
     const user = token ? await sessionUser(token) : null;
     if (!user) return res.status(401).json({ error: 'AUTHENTICATION_REQUIRED' });
     res.locals.user = user;
-    next();
+    tenantContext.run(user.workshopId, next);
   } catch (error) { next(error); }
 };
 
