@@ -3,6 +3,9 @@
   "private": true,
   "scripts": {
     "dev": "npx pnpm -F web dev",
+    "api:dev": "pnpm --filter @tallersmart/api dev",
+    "web:dev": "pnpm --filter web dev",
+    "db:up": "docker compose up -d db",
     "build": "npx pnpm -F web build",
     "start": "npx pnpm -F web start",
     "lint": "npx pnpm -F web lint"

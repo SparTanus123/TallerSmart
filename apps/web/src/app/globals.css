@@ -396,7 +396,7 @@ input:focus, textarea:focus, select:focus {
 }
 
 /* ════════════════════════════════════════════════════════════
-   Legacy classes (still used by Clients, Catalog, AI, Architecture)
+   Legacy classes for remaining application screens
    ════════════════════════════════════════════════════════════ */
 .status-badge {
   display: inline-flex;

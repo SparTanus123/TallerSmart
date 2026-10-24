@@ -57,6 +57,7 @@ model User {
   createdOrders  WorkOrder[]     @relation("CreatedOrders")
   approvedReports WorkOrder[]    @relation("ReportApprover")
   auditEvents    WorkOrderEvent[]
+  vehicleEvents  VehicleEvent[]
 
   @@map("users")
 }
@@ -89,6 +90,7 @@ model Vehicle {
   updatedAt       DateTime    @updatedAt @map("updated_at")
   currentClient   Client      @relation(fields: [currentClientId], references: [id], onDelete: Restrict)
   orders          WorkOrder[]
+  events          VehicleEvent[]
 
   @@index([currentClientId])
   @@map("vehicles")
@@ -123,10 +125,12 @@ model WorkOrder {
   diagnosis             String?
   notes                 String?
   mileageIn             Int              @map("mileage_in")
+  intakeInspection      Json?            @map("intake_inspection")
   mileageOut            Int?             @map("mileage_out")
   estimatedDelivery     DateTime?        @map("estimated_delivery") @db.Date
   total                 Decimal          @default(0) @db.Decimal(12, 2)
   deliveryReportDraft   String?          @map("delivery_report_draft")
+  approvedReportSnapshot String?         @map("approved_report_snapshot")
   reportApprovedAt      DateTime?        @map("report_approved_at")
   createdAt             DateTime         @default(now()) @map("created_at")
   updatedAt             DateTime         @updatedAt @map("updated_at")
@@ -173,4 +177,20 @@ model WorkOrderEvent {
 
   @@index([workOrderId, createdAt])
   @@map("work_order_events")
+}
+
+model VehicleEvent {
+  id        String   @id @default(uuid()) @db.Uuid
+  vehicleId String   @map("vehicle_id") @db.Uuid
+  actorId   String?  @map("actor_id") @db.Uuid
+  action    String
+  fromValue Json?    @map("from_value")
+  toValue   Json?    @map("to_value")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
+  vehicle   Vehicle  @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  actor     User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([vehicleId, createdAt])
+  @@map("vehicle_events")
 }

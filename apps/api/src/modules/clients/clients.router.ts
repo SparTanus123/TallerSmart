@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { clientSchema, updateClientSchema } from './clients.schema';
+import { createClient, getClient, listClients, updateClient } from './clients.service';
+import { requireRoles } from '../../middleware/auth';
+const router = Router();
+router.get('/', async (req, res, next) => { try { res.json(await listClients(String(req.query.q ?? ''))); } catch (e) { next(e); } });
+router.post('/', requireRoles('ADMIN', 'ADVISOR'), async (req, res, next) => { try { res.status(201).json(await createClient(clientSchema.parse(req.body))); } catch (e) { next(e); } });
+router.get('/:id', async (req, res, next) => { try { const client = await getClient(req.params.id); if (!client) return res.status(404).json({ error: 'CLIENT_NOT_FOUND' }); res.json(client); } catch (e) { next(e); } });
+router.put('/:id', requireRoles('ADMIN', 'ADVISOR'), async (req, res, next) => { try { res.json(await updateClient(req.params.id, updateClientSchema.parse(req.body))); } catch (e) { next(e); } });
+export default router;

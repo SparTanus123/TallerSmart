@@ -1,5 +1,5 @@
 "use client" /* Header */ /* Content */ /* AI Summary Card */ /* Grid */ /* Footer / Actions */
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { UserRole, WorkOrder } from "@/types"
 import {
   money,
@@ -17,6 +17,8 @@ import {
   StatusBadge,
 } from "@/components/ui/primitives"
 import { Icon } from "@/components/ui/Icon"
+import { api } from "@/lib/api-client"
+import { useGlobal } from "@/lib/context"
 export default function OTDrawer({
   ot,
   onClose,
@@ -28,7 +30,17 @@ export default function OTDrawer({
   onUpdate: (ot: WorkOrder) => void
   role: UserRole
 }) {
+  const { refreshOrders } = useGlobal()
   const [tab, setTab] = useState<"resumen" | "items" | "ia">("resumen")
+  const [catalog, setCatalog] = useState<{ id: string; type: "SERVICE" | "PART"; name: string; code: string }[]>([])
+  const [catalogId, setCatalogId] = useState("")
+  const [lineError, setLineError] = useState("")
+  const [lineBusy, setLineBusy] = useState(false)
+  const [manualLine, setManualLine] = useState(false)
+  const canAuthorize = role === "admin" || role === "advisor"
+  const editable = ot.status !== "completed" && ot.status !== "delivered"
+  useEffect(() => { if (tab === "items") void api.catalog().then(rows => setCatalog(rows.filter(r => r.active !== false).map(r => ({ id: String(r.id), type: r.type === "PART" ? "PART" : "SERVICE", name: String(r.name), code: String(r.code) })))).catch(e => setLineError(e instanceof Error ? e.message : "No se pudo cargar el catálogo")) }, [tab])
+  async function changeLine(action: () => Promise<unknown>) { setLineBusy(true); setLineError(""); try { await action(); await refreshOrders() } catch (e) { setLineError(e instanceof Error ? e.message : "No se pudo guardar el ítem") } finally { setLineBusy(false) } }
   const [isDrafting, setIsDrafting] = useState(false)
   const [draftTone, setDraftTone] = useState<"cliente" | "tecnico">("cliente")
   const [draft, setDraft] = useState(ot.deliveryReportDraft ?? "")
@@ -213,6 +225,7 @@ export default function OTDrawer({
                 </ol>
               </div>
             ) : null}
+            {ot.intakeInspection && <div className="card p-4"><div className="eyebrow mb-3">Inspección de recepción</div><div className="grid gap-2 text-sm sm:grid-cols-2"><p><span className="text-fg-3">Combustible:</span> {ot.intakeInspection.fuelLevel}%</p><p><span className="text-fg-3">Pertenencias:</span> {ot.intakeInspection.belongings.join(", ") || "Ninguna declarada"}</p><p className="sm:col-span-2"><span className="text-fg-3">Daños previos:</span> {ot.intakeInspection.damageAreas.join(", ") || "Sin daños marcados"}</p>{ot.intakeInspection.notes && <p className="sm:col-span-2 whitespace-pre-wrap"><span className="text-fg-3">Detalle:</span> {ot.intakeInspection.notes}</p>}</div></div>}
             {}{" "}
             <div className="grid grid-cols-2 gap-4">
               {" "}
@@ -259,59 +272,15 @@ export default function OTDrawer({
         )}{" "}
         {tab === "items" && (
           <div className="card overflow-hidden animate-fade-in">
-            {" "}
-            <table className="w-full text-left text-[13px]">
-              {" "}
-              <thead className="bg-surface-2 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-fg-3">
-                {" "}
-                <tr>
-                  {" "}
-                  <th className="px-4 py-3">Item</th>{" "}
-                  <th className="px-4 py-3 text-right">Cant.</th>{" "}
-                  <th className="px-4 py-3 text-right">P. Unit</th>{" "}
-                  <th className="px-4 py-3 text-right">Subtotal</th>{" "}
-                </tr>{" "}
-              </thead>{" "}
-              <tbody className="divide-y divide-line">
-                {" "}
-                {ot.items.map((item) => (
-                  <tr key={item.id}>
-                    {" "}
-                    <td className="px-4 py-3">
-                      {" "}
-                      <div className="font-medium text-fg">{item.name}</div>{" "}
-                      <div className="font-mono text-[11px] text-fg-4 uppercase mt-0.5">
-                        {item.type === "part" ? "Repuesto" : "Servicio"}
-                      </div>{" "}
-                    </td>{" "}
-                    <td className="px-4 py-3 text-right font-mono tnum">
-                      {item.quantity}
-                    </td>{" "}
-                    <td className="px-4 py-3 text-right font-mono tnum text-fg-3">
-                      {money(item.unitPrice)}
-                    </td>{" "}
-                    <td className="px-4 py-3 text-right font-mono font-medium tnum">
-                      {money(item.subtotal)}
-                    </td>{" "}
-                  </tr>
-                ))}{" "}
-              </tbody>{" "}
-              <tfoot className="bg-surface-2 border-t-2 border-line">
-                {" "}
-                <tr>
-                  {" "}
-                  <td
-                    colSpan={3}
-                    className="px-4 py-3 text-right text-[12px] font-semibold uppercase tracking-[0.06em] text-fg-3"
-                  >
-                    Total
-                  </td>{" "}
-                  <td className="px-4 py-3 text-right font-mono text-[15px] font-semibold text-brand-600 tnum">
-                    {money(ot.total)}
-                  </td>{" "}
-                </tr>{" "}
-              </tfoot>{" "}
-            </table>{" "}
+            {editable && <div className="flex flex-wrap items-center gap-2 border-b border-line p-3">
+              <select className="field h-9 min-w-56 flex-1" value={catalogId} onChange={e => setCatalogId(e.target.value)}><option value="">Agregar desde catálogo…</option>{catalog.map(row => <option key={row.id} value={row.id}>{row.code} · {row.name}</option>)}</select>
+              <button className="btn btn-secondary btn-sm" disabled={!catalogId || lineBusy} onClick={() => void changeLine(() => api.addCatalogItemToOrder(ot.id, catalogId, 1))}>Agregar</button>
+              <button className="btn btn-secondary btn-sm" disabled={lineBusy} onClick={() => setManualLine(v => !v)}>Ítem manual</button>
+            </div>}
+            {manualLine && editable && <form className="grid gap-2 border-b border-line bg-surface-2 p-3 sm:grid-cols-5" onSubmit={e => { e.preventDefault(); const f = new FormData(e.currentTarget); void changeLine(async () => { await api.addManualItemToOrder(ot.id, { type: String(f.get("type")) as "SERVICE" | "PART", name: String(f.get("name")), quantity: Number(f.get("quantity")), unitPrice: Number(f.get("unitPrice")) }); setManualLine(false) }) }}><select className="field h-9" name="type"><option value="SERVICE">Servicio</option><option value="PART">Repuesto</option></select><input className="field h-9 sm:col-span-2" name="name" placeholder="Descripción" minLength={2} required/><input className="field h-9" name="quantity" type="number" min="0.01" step="0.01" defaultValue="1" required/><input className="field h-9" name="unitPrice" type="number" min="0" step="0.01" placeholder="Precio" required/><button className="btn btn-primary btn-sm sm:col-span-5" disabled={lineBusy}>Añadir pendiente de aprobación</button></form>}
+            {lineError && <p role="alert" className="m-3 rounded bg-red-50 p-2 text-sm text-red-800">{lineError}</p>}
+            <div className="overflow-x-auto"><table className="w-full text-left text-[13px]"><thead className="bg-surface-2 font-mono text-[11px] font-medium uppercase tracking-[0.08em] text-fg-3"><tr><th className="px-3 py-3">Ítem y aprobación</th><th className="px-3 py-3 text-right">Cant.</th><th className="px-3 py-3 text-right">P. Unit</th><th className="px-3 py-3 text-right">Subtotal</th></tr></thead><tbody className="divide-y divide-line">{ot.items.map(item => <tr key={item.id}><td className="px-3 py-3"><div className="font-medium text-fg">{item.name}</div><div className="mt-1 flex flex-wrap items-center gap-2"><span className="font-mono text-[10px] uppercase text-fg-4">{item.type === "part" ? "Repuesto" : "Servicio"}</span><span className={`rounded px-2 py-0.5 text-[10px] ${item.authorizationStatus === "APPROVED" ? "bg-green-100 text-green-800" : item.authorizationStatus === "REJECTED" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-900"}`}>{item.authorizationStatus === "APPROVED" ? "Aprobado" : item.authorizationStatus === "REJECTED" ? "Rechazado" : "Pendiente de aprobación"}</span></div>{editable && canAuthorize && item.authorizationStatus !== "APPROVED" && <button className="mt-2 text-xs font-medium text-green-700 underline" disabled={lineBusy} onClick={() => void changeLine(() => api.authorizeOrderItem(ot.id, item.id, "APPROVED"))}>Aprobar</button>}{editable && canAuthorize && item.authorizationStatus !== "REJECTED" && <button className="ml-3 mt-2 text-xs font-medium text-red-700 underline" disabled={lineBusy} onClick={() => void changeLine(() => api.authorizeOrderItem(ot.id, item.id, "REJECTED"))}>Rechazar</button>}</td><td className="px-2 py-3 text-right"><input className="field h-8 w-20 text-right font-mono" type="number" min="0.01" step="0.01" defaultValue={item.quantity} disabled={!editable || lineBusy} onBlur={e => { const quantity = Number(e.target.value); if (quantity > 0 && quantity !== item.quantity) void changeLine(() => api.updateOrderItem(ot.id, item.id, { quantity })) }}/></td><td className="px-2 py-3 text-right"><input className="field h-8 w-28 text-right font-mono" type="number" min="0" step="0.01" defaultValue={item.unitPrice} disabled={!editable || lineBusy} onBlur={e => { const unitPrice = Number(e.target.value); if (unitPrice >= 0 && unitPrice !== item.unitPrice) void changeLine(() => api.updateOrderItem(ot.id, item.id, { unitPrice })) }}/></td><td className="px-3 py-3 text-right font-mono font-medium tnum">{money(item.subtotal)}</td></tr>)}</tbody><tfoot className="border-t-2 border-line bg-surface-2"><tr><td colSpan={3} className="px-3 py-3 text-right text-xs font-semibold uppercase text-fg-3">Total aprobado</td><td className="px-3 py-3 text-right font-mono text-[15px] font-semibold text-brand-600">{money(ot.total)}</td></tr></tfoot></table></div>
+            <p className="border-t border-line px-3 py-2 text-[11px] text-fg-3">El total solo incluye ítems aprobados. Cambiar cantidad o precio devuelve el ítem a pendiente.</p>
           </div>
         )}{" "}
         {tab === "ia" && (

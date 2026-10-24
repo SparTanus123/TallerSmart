@@ -1,0 +1,14 @@
+import { Router } from 'express';
+import { z } from 'zod';
+import { prisma } from '../../lib/prisma';
+import { updateVehicleSchema, vehicleSchema } from './vehicles.schema';
+import { createVehicle, listVehicles } from './vehicles.service';
+import { requireRoles } from '../../middleware/auth';
+
+const router = Router();
+const vehicleValidation = vehicleSchema;
+router.get('/', async (req, res, next) => { try { res.json(await listVehicles(String(req.query.q ?? ''), req.query.clientId ? String(req.query.clientId) : undefined)); } catch (e) { next(e); } });
+router.post('/', requireRoles('ADMIN', 'ADVISOR'), async (req, res, next) => { try { const input = vehicleValidation.parse(req.body); const vehicle = await createVehicle(input); res.status(201).json(vehicle); } catch (e) { next(e); } });
+router.get('/:id', async (req, res, next) => { try { const vehicle = await prisma.vehicle.findUnique({ where: { id: req.params.id }, include: { currentClient: true, orders: { orderBy: { createdAt: 'desc' }, take: 20 } } }); if (!vehicle) return res.status(404).json({ error: 'VEHICLE_NOT_FOUND' }); res.json(vehicle); } catch (e) { next(e); } });
+router.put('/:id', requireRoles('ADMIN', 'ADVISOR'), async (req, res, next) => { try { const input = updateVehicleSchema.parse(req.body); const { changeReason, ...data } = input; const before = await prisma.vehicle.findUniqueOrThrow({ where: { id: req.params.id } }); if (((data.mileage !== undefined && data.mileage < before.mileage) || (data.currentClientId !== undefined && data.currentClientId !== before.currentClientId)) && !changeReason) return res.status(409).json({ error: 'CHANGE_REQUIRES_REASON' }); const actorId = (res.locals.user as { id: string }).id; const vehicle = await prisma.$transaction(async tx => { const updated = await tx.vehicle.update({ where: { id: req.params.id }, data: { ...data, ...(data.vin !== undefined ? { vin: data.vin || null } : {}), ...(data.color !== undefined ? { color: data.color || null } : {}) }, include: { currentClient: true } }); if (data.mileage !== undefined || data.currentClientId !== undefined) await tx.vehicleEvent.create({ data: { vehicleId: before.id, actorId, action: data.currentClientId !== undefined && data.currentClientId !== before.currentClientId ? 'owner_changed' : 'mileage_changed', fromValue: { mileage: before.mileage, currentClientId: before.currentClientId }, toValue: { mileage: updated.mileage, currentClientId: updated.currentClientId }, reason: changeReason ?? null } }); return updated; }); res.json(vehicle); } catch (e) { next(e); } });
+export default router;

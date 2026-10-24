@@ -23,14 +23,9 @@ const NAV_GROUPS: { label: string; items: { href: string; label: string; icon: I
     label: 'Gestión',
     items: [
       { href: '/catalog', label: 'Catálogo', icon: 'catalog' },
+      { href: '/users', label: 'Usuarios y permisos', icon: 'user' },
     ],
   },
-];
-
-const ROLES: { id: "admin" | "advisor" | "technician"; label: string }[] = [
-  { id: 'admin', label: 'Admin' },
-  { id: 'advisor', label: 'Asesor' },
-  { id: 'technician', label: 'Técnico' },
 ];
 
 function Logo() {
@@ -57,7 +52,7 @@ export default function Sidebar({
   onToggleCollapse: () => void;
 }) {
   const pathname = usePathname();
-  const { role, setRole, persona, orders } = useGlobal();
+  const { persona, orders, role } = useGlobal();
   const activeCount = orders.filter((o) => o.status !== 'delivered' && o.status !== 'completed').length;
 
   return (
@@ -88,7 +83,7 @@ export default function Sidebar({
               <div className="mb-2 px-3 font-mono text-[10px] font-medium uppercase tracking-[0.12em] text-[#475569]">{group.label}</div>
             )}
             <div className="flex flex-col gap-0.5">
-              {group.items.map((item) => {
+              {group.items.filter(item => item.href !== '/users' || role === 'admin').map((item) => {
                 const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
                 return (
                   <Link
@@ -121,25 +116,6 @@ export default function Sidebar({
       </nav>
 
       <div className="p-3" style={{ boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)' }}>
-        {!collapsed && (
-          <div className="mb-3 animate-fade-in">
-            <div className="mb-1.5 px-1 font-mono text-[10px] uppercase tracking-[0.12em] text-[#475569]">Vista por rol</div>
-            <div className="flex gap-0.5 rounded-md bg-white/[0.04] p-[3px]">
-              {ROLES.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => setRole(r.id)}
-                  aria-pressed={role === r.id}
-                  className={`h-7 flex-1 rounded-sm text-[12px] font-medium transition-colors duration-150 ${
-                    role === r.id ? 'bg-white/[0.10] text-white' : 'text-[#64748B] hover:text-[#CBD5E1]'
-                  }`}
-                >
-                  {r.label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
         <div className={`flex items-center gap-2.5 ${collapsed ? 'flex-col' : ''}`}>
           <Avatar name={persona.name} size={30} />
           {!collapsed && (

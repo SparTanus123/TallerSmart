@@ -15,7 +15,7 @@ const VIEW_LABELS: Record<string, string> = {
 
 export default function TopBar() {
   const pathname = usePathname();
-  const { role, setPaletteOpen, setReceptionOpen } = useGlobal();
+  const { role, user, logout, setPaletteOpen, setReceptionOpen } = useGlobal();
 
   // Find the closest title match for the pathname (or default to dashboard)
   let title = VIEW_LABELS[pathname];
@@ -40,18 +40,11 @@ export default function TopBar() {
       </div>
 
       <div className="flex items-center gap-3">
-        {/* Mock AI Status */}
-        <div className="flex items-center gap-2 px-2" title="Motor IA en línea">
-          <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full rounded-full bg-brand-500 opacity-75 animate-breathe" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-brand-500" />
-          </span>
-          <span className="font-mono text-[11px] text-fg-3">IA LISTA</span>
+        <div className="text-right">
+          <div className="text-[12px] font-medium text-fg">{user?.name}</div>
+          <div className="text-[10px] text-fg-3">{user?.email}</div>
         </div>
-
-        <button className="flex h-8 w-8 items-center justify-center rounded-md text-fg-3 transition-colors hover:bg-canvas hover:text-fg">
-          <Icon name="bell" size={20} />
-        </button>
+        <button onClick={() => void logout()} className="btn btn-secondary btn-sm">Cerrar sesión</button>
 
         {role !== 'technician' && (
           <button onClick={() => setReceptionOpen(true)} className="btn btn-primary ml-2 h-8">

@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { catalogItemSchema, updateCatalogItemSchema } from './catalog.schema';
+import { createCatalogItem, listCatalog } from './catalog.service';
+import { prisma } from '../../lib/prisma';
+import { requireRoles } from '../../middleware/auth';
+const router = Router();
+router.get('/', async (_req, res, next) => { try { res.json(await listCatalog()); } catch (e) { next(e); } });
+router.post('/', requireRoles('ADMIN'), async (req, res, next) => { try { res.status(201).json(await createCatalogItem(catalogItemSchema.parse(req.body))); } catch (e) { next(e); } });
+router.patch('/:id', requireRoles('ADMIN'), async (req, res, next) => { try { res.json(await prisma.catalogItem.update({ where: { id: req.params.id }, data: updateCatalogItemSchema.parse(req.body) })); } catch (e) { next(e); } });
+export default router;

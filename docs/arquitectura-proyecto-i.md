@@ -1,105 +1,76 @@
-# Arquitectura y primera versión funcional — TallerSmart
+# Arquitectura y primera versión funcional
 
-**Estado:** versión de alcance para Proyecto I. La aplicación disponible es una demostración web; la persistencia PostgreSQL y la API son la arquitectura objetivo y aún requieren integración.
+## Objetivo
 
-## Objetivo de la primera versión
+Demostrar una orden de trabajo persistente y auditable de extremo a extremo: recepción de vehículo, registro del motivo, diagnóstico y notas del técnico, revisión y aprobación humana del informe, y entrega. El producto organiza registros del taller; no sustituye la valoración mecánica.
 
-Completar y demostrar una orden de trabajo de principio a fin: recepción de un vehículo existente, registro del motivo de ingreso, consulta y edición de la orden, avance por estados permitidos, preparación de un informe basado únicamente en los datos de la orden, aprobación humana y entrega. El sistema organiza y conserva información; no reemplaza el diagnóstico del mecánico.
+## Componentes
 
-Quedan fuera del MVP: inventario, recordatorios automáticos, múltiples sucursales, analítica de negocio, recomendaciones de mantenimiento y diagnóstico mediante IA. La clasificación por palabras clave, los intervalos fijos y el informe por plantilla son reglas deterministas; no se presentan como aprendizaje automático ni como generación con modelo.
-
-## Flujo principal y estados
-
-```mermaid
-stateDiagram-v2
-  [*] --> Recibida
-  Recibida --> Diagnostico
-  Recibida --> EnProceso
-  Diagnostico --> EnProceso
-  Diagnostico --> EsperaRepuestos
-  EnProceso --> EsperaRepuestos
-  EnProceso --> Completada
-  EsperaRepuestos --> EnProceso
-  Completada --> Entregada: informe revisado y aprobado
+```text
+Navegador (Next.js)
+    │ HTTP / JSON + polling de órdenes (4 s)
+    ▼
+API REST (Express + Zod)
+    │ Prisma
+    ▼
+PostgreSQL
 ```
 
-Reglas para la demostración:
+La API es la fuente de verdad. Las órdenes ya no se guardan en `localStorage`. El tablero consulta periódicamente la API y refleja cambios compartidos entre clientes conectados. Las escrituras de orden y su evento de auditoría se agrupan en transacciones Prisma.
 
-- Una orden se crea con vehículo, cliente asociado en la recepción, kilometraje de entrada y motivo de ingreso. El motivo no puede estar vacío.
-- Cada cambio de estado se agrega al historial de la orden con fecha, estado anterior, estado nuevo y rol activo.
-- Solo se permiten las transiciones dibujadas. La transición a **Entregada** requiere un informe editable cuya versión aprobada coincida con la versión que se entrega.
-- El informe se compone de campos existentes de la orden (motivo, diagnóstico, trabajos, repuestos y total). No agrega recomendaciones ni datos no registrados. El asesor revisa y aprueba antes de entregar.
-- Los cambios de propietario actualizan el vínculo del vehículo; cada orden conserva el cliente asociado al momento de recepción. Una corrección de kilometraje requiere registrar valor anterior, nuevo valor, actor y motivo en el historial.
-- Todo trabajo o repuesto adicional debe quedar pendiente de autorización del cliente antes de ejecutarse. Un cambio de precio debe guardar valor anterior/nuevo y motivo, y actualizar el total desde los ítems; nunca se sobrescribe silenciosamente.
+La sesión se entrega como cookie `HttpOnly`, firmada con HMAC y con expiración de ocho horas. Las contraseñas se almacenan como derivaciones PBKDF2. La API vuelve a consultar el usuario y su estado activo en cada solicitud; cambiar o desactivar la cuenta invalida su acceso.
 
-## Arquitectura
+## Modelo de datos
 
-```mermaid
-flowchart LR
-  A[Interfaz Next.js] --> B[API REST Express]
-  B --> C[Validación Zod]
-  C --> D[Servicios de dominio]
-  D --> E[Prisma ORM]
-  E --> F[(PostgreSQL)]
-  D --> G[Eventos de auditoría]
-```
+- `User`: actor del sistema y rol.
+- `Client`: persona u organización titular actual.
+- `Vehicle`: identificación, kilometraje y propietario actual.
+- `VehicleEvent`: auditoría de correcciones de kilometraje y cambios de propietario con motivo.
+- `CatalogItem`: servicios y repuestos.
+- `WorkOrder`: recepción, responsable, estado, diagnóstico, notas, kilometraje e informe.
+- `WorkOrderItem`: servicio/repuesto como fotografía de nombre y precio; su autorización está pendiente, aprobada o rechazada.
+- `WorkOrderEvent`: estado anterior/nuevo, edición del registro técnico, informe y aprobaciones.
 
-En la demostración actual, la interfaz Next.js conserva las órdenes en `localStorage` del navegador para que el flujo sobreviva a una recarga. Los registros de ejemplo y las nuevas órdenes solo existen en ese navegador. Esto es persistencia de demostración, no almacenamiento compartido ni respaldo. El backend Express está en etapa de esqueleto; el esquema Prisma describe el modelo objetivo, pero todavía no está conectado a la interfaz ni tiene migración aplicada.
+La placa y el VIN (cuando se informan) son únicos. El kilometraje de ingreso no puede ser menor al último valor guardado salvo corrección documentada. El kilometraje nuevo se obtiene al recibir el vehículo o por un ajuste explícito con motivo; no se infiere mientras el vehículo no regrese al taller.
 
-## Modelo de datos consolidado
+## Flujo y reglas
 
-El esquema ejecutable se mantiene en `apps/api/prisma/schema.prisma`.
+1. **Recepción:** seleccionar un vehículo registrado, confirmar kilometraje y guardar el motivo del cliente. La orden toma al titular actual del vehículo como cliente y crea evento `created`.
+2. **Diagnóstico y ejecución:** guardar diagnóstico y notas técnicas; cada edición registra antes/después. Un informe aprobado se invalida si después cambian los datos del trabajo.
+3. **Trabajos adicionales:** el servicio o repuesto se agrega con estado `PENDING`; un trabajo pendiente bloquea el cierre. Su aprobación o rechazo actualiza la bitácora y el total cobrado solo suma conceptos aprobados.
+4. **Estados:** `RECEIVED → DIAGNOSING → IN_PROGRESS ↔ WAITING_PARTS → COMPLETED → DELIVERED`, con transiciones restringidas en backend. `COMPLETED` exige diagnóstico y sin aprobaciones pendientes; `DELIVERED` exige informe aprobado.
+5. **Informe:** la plantilla solo usa datos existentes de la orden. La persona asesora revisa y aprueba el texto; el servidor guarda una instantánea inmutable del contenido aprobado. No se envía contenido inventado por un modelo.
 
-```mermaid
-erDiagram
-  CLIENT ||--o{ VEHICLE : posee
-  CLIENT ||--o{ WORK_ORDER : cliente_al_recibir
-  VEHICLE ||--o{ WORK_ORDER : historial
-  USER ||--o{ WORK_ORDER : crea
-  USER o|--o{ WORK_ORDER : tecnico
-  WORK_ORDER ||--o{ WORK_ORDER_ITEM : contiene
-  CATALOG_ITEM o|--o{ WORK_ORDER_ITEM : referencia
-  WORK_ORDER ||--o{ WORK_ORDER_EVENT : audita
-  USER o|--o{ WORK_ORDER_EVENT : actor
-```
+## API
 
-| Entidad | Responsabilidad |
-| --- | --- |
-| `Client` | Datos de contacto del propietario/cliente. |
-| `Vehicle` | Identidad del vehículo, propietario actual y kilometraje reportado. |
-| `User` | Cuenta y rol: administración, asesoría o técnico. |
-| `WorkOrder` | Fotografía de cliente y vehículo al ingreso, estado, motivo, diagnóstico, kilometrajes, total e informe. |
-| `WorkOrderItem` | Servicio o repuesto con nombre/precio capturados, cantidad y estado de autorización. |
-| `CatalogItem` | Referencia opcional de precio y descripción; la orden conserva su propia fotografía de nombre y precio. |
-| `WorkOrderEvent` | Registro cronológico de creación, cambios de estado, autorizaciones, correcciones y aprobaciones. |
+Base: `/api/v1`.
 
-## Roles, permisos y auditoría
+- Clientes y vehículos: consulta y alta; edición de vehículo requiere motivo al corregir kilometraje o transferir titular.
+- Catálogo: consulta, alta y actualización.
+- Órdenes: listado, creación, consulta, registro técnico, cambio de estado, borrador/aprobación de informe y líneas con autorización.
+- `/health`: confirma disponibilidad de API y conexión PostgreSQL.
 
-| Acción | Asesor | Técnico | Administrador |
-| --- | --- | --- | --- |
-| Crear recepción / OT | Sí | No | Sí |
-| Registrar diagnóstico y trabajo ejecutado | No | Sí | Sí |
-| Proponer trabajos o repuestos adicionales | Sí | Sí | Sí |
-| Registrar autorización del cliente | Sí | No | Sí |
-| Cambiar costos del catálogo | No | No | Sí |
-| Aprobar informe y entregar OT | Sí | No | Sí |
+Los payloads se validan con Zod. La API registra actor, instante, operación y valores anterior/nuevo en la misma transacción de la modificación.
 
-Cada evento auditable guarda actor, fecha/hora, acción, valor anterior y valor nuevo. La demostración en navegador conserva el historial junto a cada orden; el backend deberá escribir eventos en `WorkOrderEvent` dentro de la misma transacción que modifica la orden.
+Los permisos se verifican en Express: administración gestiona usuarios y catálogo; asesoría administra recepción, clientes, cambios del propietario y kilometraje, e informes y autorizaciones; técnicos registran diagnóstico y ejecución y solicitan trabajos adicionales. Cada escritura de orden usa el ID del usuario autenticado como actor. Los datos de contraseña nunca se devuelven por la API.
 
-## Validación y criterios de aceptación
+## Sincronización
 
-La validación se hará con un taller participante antes de afirmar mejoras. No se ha registrado todavía un taller ni una línea base, así que las metas numéricas siguientes son **propuestas por confirmar** con ese taller:
+El navegador consulta el tablero cada cuatro segundos mientras la pestaña está activa. Así el asesor y el técnico pueden ver órdenes compartidas sin recargar. Es polling, no WebSocket; la actualización no es instantánea. La edición concurrente del mismo campo todavía no tiene detección de conflictos.
 
-1. Completar 5 recepciones de prueba seguidas sin perder cliente/vehículo, kilometraje ni motivo al recargar la aplicación.
-2. Ninguna transición fuera de la máquina de estados está disponible; el paso a Entregada permanece bloqueado sin aprobación del informe vigente.
-3. El 100% de las operaciones de creación, cambio de estado y aprobación se ve en el historial con actor y hora.
-4. Comparar tiempo de recepción manual actual frente al flujo digital en al menos 10 órdenes observadas; reportar mediana y rango, sin afirmar reducción hasta medirla.
-5. Revisar informe de al menos 10 órdenes con el asesor: cada nombre de trabajo/repuesto, diagnóstico y valor debe tener correspondencia con un dato de la orden; tolerancia cero para elementos inventados.
+## Alcance y criterios de aceptación
 
-## Deuda explícita para la siguiente iteración
+- Una recepción nueva aparece desde otro navegador en un máximo aproximado de cuatro segundos.
+- Al reiniciar navegador o servidor, la orden y su bitácora permanecen en PostgreSQL.
+- Una transición no permitida o un kilometraje no válido se rechaza en el servidor.
+- Un trabajo adicional pendiente impide completar la OT; el total no cobra un concepto rechazado.
+- El informe aprobado no cambia por ediciones posteriores; una modificación obliga a revisarlo de nuevo.
+- Los datos semilla son ficticios y solo sirven para la demostración.
 
-- Implementar rutas de órdenes y clientes, autenticación y autorización real en Express.
-- Aplicar una migración de Prisma y conectar la interfaz a PostgreSQL; dejar `localStorage` solo como modo demostración/offline.
-- Validar el esquema Prisma y automatizar la política de transiciones en el servicio (no confiar solo en ocultar botones de interfaz).
-- Reemplazar los datos de ejemplo por datos autorizados del taller participante y documentar consentimiento, anonimización y línea base.
-- Si se incorpora un modelo generativo, medirlo por separado contra una plantilla determinista, usar solo datos de la OT como fuente permitida y exigir aprobación humana antes de publicar.
+## Estado y límites actuales
+
+El esquema Prisma y una migración inicial están en el repositorio, junto con API para clientes, vehículos, catálogo y el flujo de órdenes. La migración y el seed ya se aplicaron a la instancia PostgreSQL local. El recorrido de creación, registro técnico, cambio de estados, aprobación y entrega se verificó y produjo eventos persistentes. Para otra instalación, siga los pasos del README.
+
+Las pantallas de clientes, vehículos y catálogo consultan y crean registros en PostgreSQL. El administrador puede provisionar usuarios en **Usuarios y permisos**. Antes de producción hay que reemplazar secretos y credenciales de desarrollo, configurar HTTPS y respaldos de PostgreSQL, y revisar el manejo de conflictos cuando dos personas editan el mismo registro al mismo tiempo.
+
+No hay componente de aprendizaje automático activo. Las reglas, plantillas y texto asistido determinista no se anuncian como modelo de IA.

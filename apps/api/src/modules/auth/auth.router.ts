@@ -1,0 +1,11 @@
+import { Router } from 'express';
+import { loginSchema } from './auth.schema';
+import { authenticate, createSession } from './auth.service';
+import { requireAuth } from '../../middleware/auth';
+const router = Router();
+const attempts = new Map<string, { windowStart: number; count: number }>();
+const cookieOptions = { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax' as const, path: '/', maxAge: 8 * 60 * 60 * 1000 };
+router.post('/login', async (req, res, next) => { try { const key = req.ip ?? req.socket.remoteAddress ?? 'unknown'; const now = Date.now(); const entry = attempts.get(key); if (entry && now - entry.windowStart < 15 * 60 * 1000 && entry.count >= 10) return res.status(429).json({ error: 'LOGIN_RATE_LIMITED' }); const current = !entry || now - entry.windowStart >= 15 * 60 * 1000 ? { windowStart: now, count: 0 } : entry; current.count += 1; attempts.set(key, current); const { email, password } = loginSchema.parse(req.body); const user = await authenticate(email, password); if (!user) return res.status(401).json({ error: 'INVALID_CREDENTIALS' }); attempts.delete(key); res.cookie('ts_session', createSession(user.id), cookieOptions); res.json({ user }); } catch (e) { next(e); } });
+router.get('/me', requireAuth, (req, res) => res.json({ user: res.locals.user }));
+router.post('/logout', (_req, res) => { res.clearCookie('ts_session', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' }); res.status(204).end(); });
+export default router;

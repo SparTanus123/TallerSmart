@@ -1,0 +1,5 @@
+import { prisma } from '../../lib/prisma';
+import { hashPassword } from '../auth/password';
+export function listUsers() { return prisma.user.findMany({ select: { id: true, name: true, email: true, role: true, active: true, createdAt: true }, orderBy: { name: 'asc' } }); }
+export function createUser(input: { name: string; email: string; password: string; role: 'ADMIN' | 'ADVISOR' | 'TECHNICIAN' }) { const { password, ...user } = input; return prisma.user.create({ data: { ...user, passwordHash: hashPassword(password) }, select: { id: true, name: true, email: true, role: true, active: true, createdAt: true } }); }
+export function updateUser(id: string, input: { name?: string; role?: 'ADMIN' | 'ADVISOR' | 'TECHNICIAN'; active?: boolean; password?: string }) { const { password, ...fields } = input; return prisma.user.update({ where: { id }, data: { ...fields, ...(password ? { passwordHash: hashPassword(password) } : {}) }, select: { id: true, name: true, email: true, role: true, active: true, createdAt: true } }); }

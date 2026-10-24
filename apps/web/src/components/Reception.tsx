@@ -1,148 +1,51 @@
 "use client"
-// The current MVP uses a sample client/vehicle while the client selector is pending.
-
-import { useState } from "react"
-import type { WorkOrder } from "@/types"
-import { vehicles, clients } from "../data/mockData"
+import { useEffect, useMemo, useState } from "react"
+import type { Client, IntakeInspection, Vehicle } from "@/types"
 import { Drawer, Plate } from "@/components/ui/primitives"
 import { Icon } from "@/components/ui/Icon"
+import { useGlobal } from "@/lib/context"
 
-export default function Reception({
-  open,
-  onClose,
-  onCreate,
-  nextNumber,
-}: {
-  open: boolean
-  onClose: () => void
-  onCreate: (ot: WorkOrder) => void
-  nextNumber: number
-}) {
-  const vehicle = vehicles[0]
-  const client = clients[0]
+const belongingsList = ["Documentos", "Herramientas", "Silla infantil", "Objetos personales"]
+const damageList = ["Frontal", "Trasera", "Lateral izquierdo", "Lateral derecho", "Techo", "Parabrisas"]
+const emptyInspection: IntakeInspection = { fuelLevel: 50, belongings: [], damageAreas: [], notes: "" }
+
+export default function Reception({ open, onClose, onCreate, nextNumber, clients, vehicles }: { open: boolean; onClose: () => void; onCreate: (input: { vehicleId: string; complaint: string; mileageIn: number; estimatedDelivery: string; intakeInspection: IntakeInspection }) => Promise<void>; nextNumber: number; clients: Client[]; vehicles: Vehicle[] }) {
+  const { createClient, createVehicle, refreshDirectory } = useGlobal()
+  const [search, setSearch] = useState("")
+  const [clientId, setClientId] = useState("")
+  const [vehicleId, setVehicleId] = useState("")
   const [complaint, setComplaint] = useState("")
-  const [mileage, setMileage] = useState(String(vehicle.mileage))
-  const numericMileage = Number(mileage)
-  const canSave =
-    complaint.trim().length > 0 &&
-    Number.isInteger(numericMileage) &&
-    numericMileage >= 0
-
-  const handleSave = () => {
-    if (!canSave) return
-    const now = new Date()
-    const timestamp = now.toISOString()
-    const newOT: WorkOrder = {
-      id: `ot-${Date.now()}`,
-      number: `OT-${now.getFullYear()}-${String(nextNumber).padStart(4, "0")}`,
-      status: "received",
-      urgency: "medium",
-      vehicle: { ...vehicle, mileage: numericMileage },
-      client,
-      technicianId: "t1",
-      technicianName: "Rodrigo Vargas",
-      complaint: complaint.trim(),
-      items: [],
-      total: 0,
-      createdAt: timestamp,
-      updatedAt: timestamp,
-      estimatedDelivery: new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10),
-      mileageIn: numericMileage,
-      notes: "",
-      auditLog: [
-        {
-          id: `evt-${Date.now()}`,
-          action: "created",
-          actor: "advisor",
-          at: timestamp,
-          toStatus: "received",
-        },
-      ],
-    }
-    onCreate(newOT)
-    setComplaint("")
-    setMileage(String(vehicle.mileage))
+  const [mileage, setMileage] = useState("")
+  const [inspection, setInspection] = useState<IntakeInspection>(emptyInspection)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState("")
+  const [quickClient, setQuickClient] = useState(false)
+  const [quickVehicle, setQuickVehicle] = useState(false)
+  const [newClientName, setNewClientName] = useState("")
+  const [busyQuick, setBusyQuick] = useState(false)
+  const clientVehicles = useMemo(() => vehicles.filter(v => (!clientId || v.clientId === clientId) && (!search || `${v.plate} ${v.make} ${v.model}`.toLowerCase().includes(search.toLowerCase()))), [vehicles, clientId, search])
+  const vehicle = vehicles.find(v => v.id === vehicleId) ?? clientVehicles[0]
+  const client = clients.find(c => c.id === (clientId || vehicle?.clientId))
+  useEffect(() => { if (vehicle && vehicle.id !== vehicleId) setVehicleId(vehicle.id) }, [vehicle, vehicleId])
+  useEffect(() => { if (vehicle) setMileage(String(vehicle.mileage)); else setMileage("") }, [vehicle])
+  useEffect(() => { const created = clients.find(c => c.name === newClientName); if (created) { setClientId(created.id); setNewClientName(""); setQuickClient(false) } }, [clients, newClientName])
+  useEffect(() => { if (!open) { setSearch(""); setClientId(""); setVehicleId(""); setComplaint(""); setInspection(emptyInspection); setError("") } }, [open])
+  const canSave = Boolean(vehicle && complaint.trim().length >= 5 && Number.isInteger(Number(mileage)) && Number(mileage) >= vehicle.mileage)
+  const toggle = (field: "belongings" | "damageAreas", value: string) => setInspection(current => ({ ...current, [field]: current[field].includes(value) ? current[field].filter(v => v !== value) : [...current[field], value] }))
+  async function save() {
+    if (!canSave || !vehicle) return
+    setSaving(true); setError("")
+    try { await onCreate({ vehicleId: vehicle.id, complaint: complaint.trim(), mileageIn: Number(mileage), estimatedDelivery: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10), intakeInspection: inspection }); setComplaint(""); setInspection(emptyInspection); onClose() }
+    catch (e) { setError(e instanceof Error ? e.message : "No se pudo crear la orden") }
+    finally { setSaving(false) }
   }
-
-  return (
-    <Drawer open={open} onClose={onClose} width={720}>
-      <div className="flex shrink-0 items-center justify-between border-b border-line px-6 py-4">
-        <h2 className="text-[16px] font-semibold text-fg">Nueva recepción</h2>
-        <button
-          onClick={onClose}
-          className="text-fg-4 hover:text-fg"
-          aria-label="Cerrar recepción"
-        >
-          <Icon name="x" size={20} />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto bg-canvas p-6">
-        <div className="mb-6 rounded-xl border border-line bg-surface p-4">
-          <div className="flex items-center gap-4">
-            <Plate value={vehicle.plate} size="lg" />
-            <div>
-              <div className="font-semibold text-[15px]">
-                {vehicle.make} {vehicle.model}{" "}
-                <span className="font-normal text-fg-3">{vehicle.year}</span>
-              </div>
-              <div className="text-[13px] text-fg-2">{client.name}</div>
-            </div>
-          </div>
-          <label
-            className="mt-4 block text-[12px] font-medium text-fg-2"
-            htmlFor="intake-mileage"
-          >
-            Kilometraje confirmado al recibir (km)
-          </label>
-          <input
-            id="intake-mileage"
-            type="number"
-            min="0"
-            step="1"
-            className="field mt-1 h-10 w-full"
-            value={mileage}
-            onChange={(event) => setMileage(event.target.value)}
-          />
-          <p className="mt-1 text-[11px] text-fg-3">
-            Confirma el dato con el cliente o el tablero. Este valor queda
-            registrado en la orden.
-          </p>
-        </div>
-
-        <label
-          className="mb-2 block text-[12px] font-medium uppercase tracking-wide text-fg-3"
-          htmlFor="intake-complaint"
-        >
-          Motivo de ingreso
-        </label>
-        <textarea
-          id="intake-complaint"
-          className="min-h-32 w-full resize-y rounded-xl border border-line bg-surface p-4 text-[14px] leading-relaxed text-fg focus:border-brand-500 focus:outline-none"
-          placeholder="Registra con las palabras del cliente qué ocurrió y cuándo ocurre."
-          value={complaint}
-          onChange={(event) => setComplaint(event.target.value)}
-        />
-        <p className="mt-2 text-[12px] text-fg-3">
-          Esta versión documenta el ingreso. La valoración del síntoma y el
-          diagnóstico corresponden al mecánico.
-        </p>
-      </div>
-
-      <div className="flex shrink-0 items-center justify-end gap-3 border-t border-line bg-surface p-4">
-        <button className="btn btn-ghost" onClick={onClose}>
-          Cancelar
-        </button>
-        <button
-          className="btn btn-primary"
-          onClick={handleSave}
-          disabled={!canSave}
-        >
-          Crear orden {`OT-${String(nextNumber).padStart(4, "0")}`}
-        </button>
-      </div>
-    </Drawer>
-  )
+  return <Drawer open={open} onClose={onClose} width={720}>
+    <div className="flex shrink-0 items-center justify-between border-b border-line px-6 py-4"><h2 className="text-[16px] font-semibold text-fg">Nueva recepción</h2><button onClick={onClose} className="text-fg-4 hover:text-fg" aria-label="Cerrar recepción"><Icon name="x" size={20} /></button></div>
+    <div className="flex-1 overflow-y-auto bg-canvas p-6 space-y-5">
+      <section className="card space-y-4 p-4"><div className="flex items-center justify-between"><h3 className="font-semibold">Cliente y vehículo</h3><div className="flex gap-2"><button className="btn btn-secondary btn-sm" onClick={() => setQuickClient(v => !v)}>Nuevo cliente</button><button className="btn btn-secondary btn-sm" onClick={() => setQuickVehicle(v => !v)} disabled={!clientId}>Nuevo vehículo</button></div></div>{quickClient && <form className="grid gap-2 rounded-lg border border-line bg-surface-2 p-3 sm:grid-cols-2" onSubmit={async e => { e.preventDefault(); const f = new FormData(e.currentTarget); setBusyQuick(true); setError(""); const name = String(f.get("name")); try { await createClient({ name, phone: String(f.get("phone")), email: String(f.get("email") ?? ""), type: String(f.get("type")) as "PERSONAL" | "COMPANY" }); setNewClientName(name); await refreshDirectory() } catch (x) { setError(x instanceof Error ? x.message : "No se pudo guardar cliente") } finally { setBusyQuick(false) } }}><input className="field h-9" name="name" placeholder="Nombre" minLength={2} required/><input className="field h-9" name="phone" placeholder="Teléfono" minLength={7} required/><input className="field h-9" name="email" type="email" placeholder="Correo (opcional)"/><select className="field h-9" name="type"><option value="PERSONAL">Persona</option><option value="COMPANY">Empresa</option></select><button className="btn btn-primary btn-sm sm:col-span-2" disabled={busyQuick}>{busyQuick ? "Guardando…" : "Guardar cliente"}</button></form>}{quickVehicle && <form className="grid gap-2 rounded-lg border border-line bg-surface-2 p-3 sm:grid-cols-2" onSubmit={async e => { e.preventDefault(); const f = new FormData(e.currentTarget); setBusyQuick(true); setError(""); try { await createVehicle({ currentClientId: clientId, plate: String(f.get("plate")), make: String(f.get("make")), model: String(f.get("model")), year: Number(f.get("year")), mileage: Number(f.get("mileage")), color: String(f.get("color") ?? "") }); await refreshDirectory(); setQuickVehicle(false) } catch (x) { setError(x instanceof Error ? x.message : "No se pudo guardar vehículo") } finally { setBusyQuick(false) } }}><input className="field h-9" name="plate" placeholder="Patente" minLength={5} required/><input className="field h-9" name="make" placeholder="Marca" required/><input className="field h-9" name="model" placeholder="Modelo" required/><input className="field h-9" name="year" type="number" min="1900" max="2100" placeholder="Año" required/><input className="field h-9" name="mileage" type="number" min="0" placeholder="Kilometraje" required/><input className="field h-9" name="color" placeholder="Color"/><button className="btn btn-primary btn-sm sm:col-span-2" disabled={busyQuick}>{busyQuick ? "Guardando…" : "Guardar vehículo"}</button></form>}<label className="block text-xs font-medium text-fg-2">Cliente<select className="field mt-1 h-10 w-full" value={clientId} onChange={e => { setClientId(e.target.value); setVehicleId("") }}><option value="">Todos los clientes</option>{clients.map(c => <option key={c.id} value={c.id}>{c.name} · {c.phone}</option>)}</select></label><label className="block text-xs font-medium text-fg-2">Buscar patente / vehículo<input className="field mt-1 h-10 w-full" placeholder="ABC123 · Toyota Corolla" value={search} onChange={e => setSearch(e.target.value)} /></label><label className="block text-xs font-medium text-fg-2">Vehículo<select className="field mt-1 h-10 w-full" value={vehicle?.id ?? ""} onChange={e => setVehicleId(e.target.value)}><option value="">Selecciona vehículo</option>{clientVehicles.map(v => <option key={v.id} value={v.id}>{v.plate} · {v.make} {v.model} · {clients.find(c => c.id === v.clientId)?.name}</option>)}</select></label>{vehicle && client && <div className="flex items-center gap-4"><Plate value={vehicle.plate} size="lg"/><div className="font-semibold">{vehicle.make} {vehicle.model} {vehicle.year}<div className="text-sm font-normal text-fg-3">{client.name}</div></div></div>}<label className="block text-xs font-medium text-fg-2">Kilometraje de entrada (km)<input type="number" min={vehicle?.mileage ?? 0} step="1" className="field mt-1 h-10 w-full" value={mileage} onChange={e => setMileage(e.target.value)}/><span className="text-[11px] text-fg-3">No puede ser menor al último kilometraje registrado ({vehicle?.mileage ?? 0} km).</span></label></section>
+      <section className="card space-y-3 p-4"><h3 className="font-semibold">Inspección inicial</h3><label className="block text-xs font-medium text-fg-2">Combustible: {inspection.fuelLevel}%<input aria-label="Nivel de combustible" className="mt-2 w-full accent-orange-600" type="range" min="0" max="100" step="5" value={inspection.fuelLevel} onChange={e => setInspection(v => ({ ...v, fuelLevel: Number(e.target.value) }))}/></label><fieldset><legend className="mb-2 text-xs font-medium text-fg-2">Pertenencias declaradas</legend><div className="flex flex-wrap gap-2">{belongingsList.map(x => <label key={x} className="flex items-center gap-2 rounded border border-line px-2 py-1 text-xs"><input type="checkbox" checked={inspection.belongings.includes(x)} onChange={() => toggle("belongings", x)}/>{x}</label>)}</div></fieldset><fieldset><legend className="mb-2 text-xs font-medium text-fg-2">Daños previos visibles</legend><div className="grid grid-cols-2 gap-2">{damageList.map(x => <label key={x} className="flex items-center gap-2 rounded border border-line px-2 py-1 text-xs"><input type="checkbox" checked={inspection.damageAreas.includes(x)} onChange={() => toggle("damageAreas", x)}/>{x}</label>)}</div></fieldset><label className="block text-xs font-medium text-fg-2">Detalle de pertenencias / rayones / abolladuras<textarea className="field mt-1 min-h-20 w-full" maxLength={2000} value={inspection.notes} onChange={e => setInspection(v => ({ ...v, notes: e.target.value }))} placeholder="Describe ubicación, tamaño o condición observada."/></label><p className="text-[11px] text-fg-3">La inspección queda guardada en el historial de la orden. Adjuntar fotos se habilitará cuando exista almacenamiento de archivos.</p></section>
+      <label className="block text-xs font-medium text-fg-2">Motivo de ingreso<textarea className="field mt-1 min-h-28 w-full resize-y" maxLength={3000} placeholder="Registra con las palabras del cliente qué ocurrió y cuándo ocurre." value={complaint} onChange={e => setComplaint(e.target.value)}/></label><p className="text-xs text-fg-3">El diagnóstico y las recomendaciones técnicas corresponden al mecánico.</p>{error && <p role="alert" className="rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
+    </div>
+    <div className="flex shrink-0 items-center justify-end gap-3 border-t border-line bg-surface p-4"><button className="btn btn-ghost" onClick={onClose}>Cancelar</button><button className="btn btn-primary" onClick={save} disabled={!canSave || saving}>{saving ? "Guardando…" : `Crear orden OT-${String(nextNumber).padStart(4,"0")}`}</button></div>
+  </Drawer>
 }

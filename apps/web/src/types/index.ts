@@ -39,11 +39,19 @@ export interface WorkOrderItem {
   quantity: number
   unitPrice: number
   subtotal: number
+  authorizationStatus?: "PENDING" | "APPROVED" | "REJECTED"
+}
+
+export interface IntakeInspection {
+  fuelLevel: number
+  belongings: string[]
+  damageAreas: string[]
+  notes: string
 }
 
 export interface WorkOrderAuditEntry {
   id: string
-  action: "created" | "status_changed" | "record_updated" | "report_approved"
+  action: "created" | "status_changed" | "record_updated" | "report_approved" | "report_draft_updated" | "additional_work_requested" | "item_authorization_changed"
   actor: string
   at: string
   fromStatus?: OTStatus
@@ -68,6 +76,7 @@ export interface WorkOrder {
   updatedAt: string
   estimatedDelivery: string
   mileageIn: number
+  intakeInspection?: IntakeInspection
   mileageOut?: number
   urgency: UrgencyLevel
   auditLog?: WorkOrderAuditEntry[]
