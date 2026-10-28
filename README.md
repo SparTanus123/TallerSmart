@@ -1,6 +1,6 @@
 # TallerSmart
 
-Aplicación propia para registrar, tramitar y auditar órdenes de trabajo de un taller automotriz. El flujo principal conecta recepción, diagnóstico, ejecución, revisión del informe y entrega. El sistema documenta el trabajo; el diagnóstico mecánico y la aprobación del informe siguen bajo responsabilidad humana. gg
+Aplicación propia para registrar, tramitar y auditar órdenes de trabajo de un taller automotriz. El flujo principal conecta recepción, diagnóstico, ejecución, revisión del informe y entrega. El sistema documenta el trabajo; el diagnóstico mecánico y la aprobación del informe siguen bajo responsabilidad humana.
 
 ## Arquitectura
 
