@@ -17,21 +17,28 @@ async function proxy(request: NextRequest, context: Context) {
   const headers = new Headers(request.headers)
   for (const name of ["host", "origin", "connection", "content-length", "accept-encoding"]) headers.delete(name)
   const hasBody = !["GET", "HEAD"].includes(request.method)
-  const upstream = await fetch(`${target}/api/${path.map(encodeURIComponent).join("/")}${search}`, {
-    method: request.method,
-    headers,
-    body: hasBody ? await request.arrayBuffer() : undefined,
-    cache: "no-store",
-    redirect: "manual",
-  })
-  const responseHeaders = new Headers(upstream.headers)
-  for (const name of ["content-encoding", "content-length", "transfer-encoding", "connection"]) responseHeaders.delete(name)
-  const getSetCookie = (upstream.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie
-  if (getSetCookie) {
-    responseHeaders.delete("set-cookie")
-    for (const cookie of getSetCookie.call(upstream.headers)) responseHeaders.append("set-cookie", cookie)
+  try {
+    const upstream = await fetch(`${target}/api/${path.map(encodeURIComponent).join("/")}${search}`, {
+      method: request.method,
+      headers,
+      body: hasBody ? await request.arrayBuffer() : undefined,
+      cache: "no-store",
+      redirect: "manual",
+    })
+    const responseHeaders = new Headers(upstream.headers)
+    for (const name of ["content-encoding", "content-length", "transfer-encoding", "connection"]) responseHeaders.delete(name)
+    const getSetCookie = (upstream.headers as Headers & { getSetCookie?: () => string[] }).getSetCookie
+    if (getSetCookie) {
+      responseHeaders.delete("set-cookie")
+      for (const cookie of getSetCookie.call(upstream.headers)) responseHeaders.append("set-cookie", cookie)
+    }
+    return new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: responseHeaders })
+  } catch {
+    return Response.json(
+      { error: "API_UNAVAILABLE", message: "No se pudo conectar con el servidor backend (API). Asegúrate de que el servicio backend y la base de datos estén iniciados." },
+      { status: 503 }
+    )
   }
-  return new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: responseHeaders })
 }
 
 export const GET = proxy

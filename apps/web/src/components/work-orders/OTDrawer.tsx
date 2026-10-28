@@ -20,6 +20,7 @@ import {
 import { Icon } from "@/components/ui/Icon"
 import { api } from "@/lib/api-client"
 import { useGlobal } from "@/lib/context"
+import { SmartMecLogo } from "@/components/ai/SmartMecLogo"
 export default function OTDrawer({
   ot,
   onClose,
@@ -93,20 +94,25 @@ export default function OTDrawer({
       ],
     })
   }
-  const handleDraft = () => {
+  const handleDraft = async () => {
     setIsDrafting(true)
     setDraft("")
     setReportApproved(false)
-    const full = draftReport(ot, draftTone)
-    let i = 0
-    const interval = setInterval(() => {
-      setDraft(full.slice(0, i))
-      i += 3
-      if (i > full.length) {
-        clearInterval(interval)
-        setIsDrafting(false)
+    try {
+      const res = await api.aiDeliveryReport({
+        workOrderId: ot.id,
+        tone: draftTone,
+      })
+      if (res.success && res.report) {
+        setDraft(res.report)
+      } else {
+        setDraft(draftReport(ot, draftTone))
       }
-    }, 10)
+    } catch {
+      setDraft(draftReport(ot, draftTone))
+    } finally {
+      setIsDrafting(false)
+    }
   }
   return (
     <Drawer open={true} onClose={onClose} width={640}>
@@ -308,15 +314,17 @@ export default function OTDrawer({
               {" "}
               <div className="mb-4 flex items-center justify-between">
                 {" "}
-                <div>
-                  {" "}
-                  <div className="font-semibold text-fg">
-                    Borrador de informe · plantilla determinista
-                  </div>{" "}
-                  <div className="text-[13px] text-fg-3">
-                    Organiza los datos registrados. Revisa y aprueba el texto
-                    antes de entregarlo al cliente.
-                  </div>{" "}
+                <div className="flex items-center gap-3">
+                  <SmartMecLogo size={36} glow />
+                  <div>
+                    <div className="font-semibold text-fg">
+                      Borrador de informe · SmartMec (Gemini AI)
+                    </div>
+                    <div className="text-[13px] text-fg-3">
+                      Organiza los datos registrados. Revisa y aprueba el texto
+                      antes de entregarlo al cliente.
+                    </div>
+                  </div>
                 </div>{" "}
                 <div className="seg">
                   {" "}

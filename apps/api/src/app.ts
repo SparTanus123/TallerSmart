@@ -11,6 +11,7 @@ import clientsRouter from './modules/clients/clients.router';
 import vehiclesRouter from './modules/vehicles/vehicles.router';
 import catalogRouter from './modules/catalog/catalog.router';
 import workOrdersRouter from './modules/work-orders/work-orders.router';
+import aiRouter from './modules/ai/ai.router';
 
 const app = express();
 app.disable('x-powered-by');
@@ -38,6 +39,7 @@ api.use('/clients', clientsRouter);
 api.use('/vehicles', vehiclesRouter);
 api.use('/catalog', catalogRouter);
 api.use('/work-orders', workOrdersRouter);
+api.use('/ai', aiRouter);
 app.use('/api/v1', api);
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (error instanceof ZodError) return res.status(400).json({ error: 'VALIDATION_ERROR', details: error.flatten() });

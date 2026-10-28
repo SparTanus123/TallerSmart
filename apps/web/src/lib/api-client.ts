@@ -10,7 +10,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   if (!response.ok) {
     const payload = await response.json().catch(() => ({}))
     if (response.status === 401 && path !== "/auth/login" && typeof window !== "undefined") window.location.assign("/login")
-    throw new Error(payload.error ?? `API_ERROR_${response.status}`)
+    throw new Error(payload.message ?? payload.error ?? `API_ERROR_${response.status}`)
   }
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
@@ -22,7 +22,7 @@ export const api = {
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}))
       if (response.status === 401 && typeof window !== "undefined") window.location.assign("/login")
-      throw new Error(payload.error ?? `API_ERROR_${response.status}`)
+      throw new Error(payload.message ?? payload.error ?? `API_ERROR_${response.status}`)
     }
     const blob = await response.blob()
     const url = URL.createObjectURL(blob)
@@ -62,4 +62,9 @@ export const api = {
   users: () => request<{ id: string; name: string; email: string; role: "ADMIN" | "ADVISOR" | "TECHNICIAN"; active: boolean }[]>("/users"),
   createUser: (body: { name: string; email: string; password: string; role: "ADMIN" | "ADVISOR" | "TECHNICIAN" }) => request<unknown>("/users", { method: "POST", body: JSON.stringify(body) }),
   updateUser: (id: string, body: { active?: boolean; role?: "ADMIN" | "ADVISOR" | "TECHNICIAN"; password?: string }) => request<unknown>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
+  aiStatus: () => request<{ agent: { name: string; title: string; version: string; description: string; capabilities: string[] }; gemini: { ok: boolean; model: string; latencyMs: number; error?: string } }>("/ai/status"),
+  aiChat: (body: { messages: { role: "user" | "model"; content: string }[]; workOrderId?: string; vehicleId?: string }) => request<{ reply: string; model: string; agent: string }>("/ai/chat", { method: "POST", body: JSON.stringify(body) }),
+  aiIntake: (body: { complaint: string; vehicleInfo?: string; mileage?: number; workOrderId?: string }) => request<{ success: boolean; data?: { sintomas_extraidos: string[]; sistema_afectado: string; subsistema: string; nivel_urgencia: "BAJO" | "MEDIO" | "ALTO"; razon_urgencia: string; diagnosticos_recomendados: string[]; nota_mecanico: string }; raw?: string; model: string; agent: string }>("/ai/intake", { method: "POST", body: JSON.stringify(body) }),
+  aiPreventive: (body: { vehicleId?: string; make?: string; model?: string; year?: number; mileage?: number }) => request<{ success: boolean; data?: Array<{ servicio: string; prioridad: "URGENTE" | "RECOMENDADO" | "PROGRAMAR"; km_actual: number; km_intervalo_fabricante: number; razon: string; criticidad: string }>; vehicle?: { make: string; model: string; year: number; mileage: number }; model: string; agent: string }>("/ai/preventive", { method: "POST", body: JSON.stringify(body) }),
+  aiDeliveryReport: (body: { workOrderId?: string; clientName?: string; vehicleInfo?: string; mileageIn?: number; mileageOut?: number; diagnosis?: string; notes?: string; itemsInstalled?: string[]; tone?: "cliente" | "tecnico" }) => request<{ success: boolean; report: string; model: string; agent: string }>("/ai/delivery-report", { method: "POST", body: JSON.stringify(body) }),
 }

@@ -147,10 +147,10 @@ export const catalogItems: CatalogItem[] = [
 ];
 
 export const statusConfig: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  received:      { label: 'Recibido',          color: '#475569', bg: '#F1F5F9', border: '#CBD5E1' },
-  diagnosing:    { label: 'En Diagnóstico',    color: '#6D28D9', bg: '#F3EEFF', border: '#DDD0FE' },
-  in_progress:   { label: 'En Proceso',        color: '#1D4ED8', bg: '#EEF4FF', border: '#C7D7FE' },
-  waiting_parts: { label: 'Espera Repuestos',  color: '#B45309', bg: '#FEF6E0', border: '#FCE3A6' },
-  completed:     { label: 'Finalizado',        color: '#047857', bg: '#E9F9F1', border: '#A7E8C9' },
-  delivered:     { label: 'Entregado',         color: '#334155', bg: '#E8EBEF', border: '#CBD5E1' },
+  received:      { label: 'Recibido',          color: '#46515E', bg: '#E9EDF1', border: '#CDD5DD' },
+  diagnosing:    { label: 'En Diagnóstico',    color: '#155B83', bg: '#E8F4FA', border: '#B9DDED' },
+  in_progress:   { label: 'En Proceso',        color: '#1F5F98', bg: '#EAF2FB', border: '#C4D9EF' },
+  waiting_parts: { label: 'Espera Repuestos',  color: '#7A5200', bg: '#FFF5D6', border: '#EBD68E' },
+  completed:     { label: 'Finalizado',        color: '#17663E', bg: '#EAF7EF', border: '#BCE3CA' },
+  delivered:     { label: 'Entregado',         color: '#46515E', bg: '#E9EDF1', border: '#CDD5DD' },
 };

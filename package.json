@@ -2,7 +2,8 @@
   "name": "tallersmart-workspace",
   "private": true,
   "scripts": {
-    "dev": "npx pnpm -F web dev",
+    "dev": "npx pnpm --parallel --filter @tallersmart/api --filter web dev",
+    "dev:web": "npx pnpm -F web dev",
     "api:dev": "pnpm --filter @tallersmart/api dev",
     "web:dev": "pnpm --filter web dev",
     "db:up": "docker compose up -d db",

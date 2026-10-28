@@ -15,7 +15,7 @@ const VIEW_LABELS: Record<string, string> = {
 
 export default function TopBar() {
   const pathname = usePathname();
-  const { role, user, logout, setPaletteOpen, setReceptionOpen } = useGlobal();
+  const { role, setPaletteOpen, setReceptionOpen } = useGlobal();
 
   // Find the closest title match for the pathname (or default to dashboard)
   let title = VIEW_LABELS[pathname];
@@ -25,31 +25,26 @@ export default function TopBar() {
   }
 
   return (
-    <header className="flex h-[56px] shrink-0 items-center justify-between bg-surface px-5 shadow-e0">
-      <div className="flex items-center gap-4">
-        <h1 className="text-[15px] font-semibold tracking-[-0.01em] text-fg">{title}</h1>
-        <div className="h-4 w-px bg-line" />
+    <header className="flex h-[56px] shrink-0 items-center justify-between gap-2 bg-surface px-3 shadow-e0 sm:px-5">
+      <div className="flex min-w-0 items-center gap-2 sm:gap-4">
+        <h1 className="truncate text-[14px] font-semibold tracking-[-0.01em] text-fg sm:text-[15px]">{title}</h1>
+        <div className="hidden h-4 w-px bg-line sm:block" />
         <button
           onClick={() => setPaletteOpen(true)}
-          className="flex h-8 items-center gap-2 rounded-md bg-canvas px-2.5 text-[13px] text-fg-3 transition-colors hover:bg-line"
+          aria-label="Buscar por patente, orden de trabajo o cliente"
+          className="flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-md text-fg-3 transition-colors hover:bg-surface-2 hover:text-fg sm:h-8 sm:w-auto sm:justify-start sm:bg-canvas sm:px-2.5 sm:text-[13px]"
         >
           <Icon name="search" size={16} />
-          <span>Buscar por patente, OT o cliente...</span>
-          <span className="kbd ml-2">?K</span>
+          <span className="hidden md:inline">Buscar por patente, OT o cliente...</span>
+          <span className="kbd ml-2 hidden lg:inline">?K</span>
         </button>
       </div>
 
       <div className="flex items-center gap-3">
-        <div className="text-right">
-          <div className="text-[12px] font-medium text-fg">{user?.name}</div>
-          <div className="text-[10px] text-fg-3">{user?.email}</div>
-        </div>
-        <button onClick={() => void logout()} className="btn btn-secondary btn-sm">Cerrar sesión</button>
-
         {role !== 'technician' && (
-          <button onClick={() => setReceptionOpen(true)} className="btn btn-primary ml-2 h-8">
+          <button onClick={() => setReceptionOpen(true)} aria-label="Registrar nueva recepción" className="btn btn-primary flex h-10 w-10 shrink-0 justify-center p-0 sm:h-8 sm:w-auto sm:justify-start sm:px-3">
             <Icon name="plus" size={16} />
-            Nueva Recepción
+            <span className="hidden sm:inline">Nueva Recepción</span>
           </button>
         )}
       </div>
