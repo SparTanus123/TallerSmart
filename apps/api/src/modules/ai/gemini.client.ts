@@ -1,14 +1,22 @@
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? '';
-const PRIMARY_MODEL = process.env.GEMINI_MODEL ?? 'gemini-3-flash-preview';
+function getApiKey(): string {
+  return (process.env.GEMINI_API_KEY ?? '').trim();
+}
+
+function getPrimaryModel(): string {
+  return (process.env.GEMINI_MODEL ?? '').trim() || 'gemini-3.5-flash-lite';
+}
 
 // Cascade list of models to try in case of temporary 503 or 429
-const FALLBACK_MODELS = [
-  PRIMARY_MODEL,
-  'gemini-3-flash-preview',
-  'gemini-3.5-flash',
-  'gemini-3.6-flash',
-  'gemini-3.8-flash',
-].filter((m, i, arr) => arr.indexOf(m) === i);
+function getFallbackModels(): string[] {
+  const primary = getPrimaryModel();
+  return [
+    primary,
+    'gemini-3.5-flash-lite',
+    'gemini-3.5-flash',
+    'gemini-3.6-flash',
+    'gemini-3-flash-preview',
+  ].filter((m, i, arr) => arr.indexOf(m) === i && !!m);
+}
 
 export const SMARTMEC_SYSTEM_PROMPT = `Eres SmartMec, el Asistente Automotriz Inteligente y copiloto experto de TallerSmart.
 Tu rol es asistir a recepcionistas, asesores de servicio y mecánicos en tareas técnicas:
@@ -52,7 +60,8 @@ interface GeminiResponse {
 }
 
 export async function callGemini(options: GenerateOptions): Promise<{ text: string; model: string }> {
-  if (!GEMINI_API_KEY) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
     throw new Error('GEMINI_API_KEY no está configurada en las variables de entorno.');
   }
 
@@ -60,9 +69,9 @@ export async function callGemini(options: GenerateOptions): Promise<{ text: stri
 
   let lastError: Error | null = null;
 
-  for (const model of FALLBACK_MODELS) {
+  for (const model of getFallbackModels()) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
       
       const payload: Record<string, unknown> = {
         system_instruction: {
@@ -118,15 +127,16 @@ export async function callGeminiChat(
   history: Array<{ role: 'user' | 'model'; parts: string }>,
   systemInstruction?: string
 ): Promise<{ text: string; model: string }> {
-  if (!GEMINI_API_KEY) {
+  const apiKey = getApiKey();
+  if (!apiKey) {
     throw new Error('GEMINI_API_KEY no está configurada.');
   }
 
   let lastError: Error | null = null;
 
-  for (const model of FALLBACK_MODELS) {
+  for (const model of getFallbackModels()) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
 
       const contents = history.map((h) => ({
         role: h.role,
@@ -174,6 +184,7 @@ export async function callGeminiChat(
 
 export async function checkGeminiHealth(): Promise<{ ok: boolean; model: string; latencyMs: number; error?: string }> {
   const start = Date.now();
+  const primary = getPrimaryModel();
   try {
     const { model } = await callGemini({
       prompt: 'Responde únicamente con la palabra OK.',
@@ -183,7 +194,7 @@ export async function checkGeminiHealth(): Promise<{ ok: boolean; model: string;
   } catch (e: unknown) {
     return {
       ok: false,
-      model: PRIMARY_MODEL,
+      model: primary,
       latencyMs: Date.now() - start,
       error: e instanceof Error ? e.message : 'Error al conectar con Gemini API',
     };
