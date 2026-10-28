@@ -1,0 +1,9 @@
+[allowlist]
+description = "Ignore build artifacts and third-party tools"
+paths = [
+  '''apps[/\\]web[/\\]\.next''',
+  '''node_modules''',
+  '''tools[/\\]repos''',
+  '''dist''',
+  '''\.agents[/\\]reports'''
+]

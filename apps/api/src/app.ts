@@ -13,6 +13,14 @@ import catalogRouter from './modules/catalog/catalog.router';
 import workOrdersRouter from './modules/work-orders/work-orders.router';
 
 const app = express();
+app.disable('x-powered-by');
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Content-Security-Policy', "default-src 'self'");
+  res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
 const allowedOrigins = (process.env.CORS_ORIGIN ?? 'http://localhost:3000,http://localhost:8443').split(',').map(v => v.trim());
 const originAllowed = (origin?: string) => {
   if (!origin || allowedOrigins.includes(origin)) return true;
@@ -39,7 +47,7 @@ app.use((error: unknown, _req: express.Request, res: express.Response, _next: ex
     if (error.code === 'P2003') return res.status(409).json({ error: 'RELATED_RECORD_CONFLICT' });
   }
   const status = typeof error === 'object' && error !== null && 'status' in error && typeof error.status === 'number' ? error.status : 500;
-  const message = error instanceof Error ? error.message : 'INTERNAL_ERROR';
+  const message = status >= 500 && process.env.NODE_ENV === 'production' ? 'INTERNAL_SERVER_ERROR' : (error instanceof Error ? error.message : 'INTERNAL_ERROR');
   if (status >= 500) console.error(error);
   res.status(status).json({ error: message });
 });

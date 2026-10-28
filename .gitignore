@@ -14,3 +14,6 @@ apps/api/storage/uploads/
 .tmp-*
 /.plugins/
 /.opencode-skills/
+tools/repos/
+.agents/reports/
+

@@ -35,7 +35,16 @@ router.post('/:id/intake-photos', requireRoles('ADMIN', 'ADVISOR'), async (req, 
   } catch (e) { next(e); }
 });
 router.get('/:id/intake-photos/:photoId', async (req, res, next) => {
-  try { const photo = await prisma.intakePhoto.findFirstOrThrow({ where: { id: req.params.photoId, workOrderId: req.params.id } }); const content = await readFile(path.join(uploadDir, photo.storageKey)); res.setHeader('Content-Type', photo.mimeType); res.setHeader('Content-Disposition', `inline; filename="${photo.fileName.replace(/["\\\r\n]/g, '_')}"`); res.setHeader('Cache-Control', 'private, no-store'); res.send(content); } catch (e) { next(e); }
+  try {
+    const photo = await prisma.intakePhoto.findFirstOrThrow({ where: { id: req.params.photoId, workOrderId: req.params.id } });
+    const safeMime = ['image/jpeg', 'image/png', 'image/webp'].includes(photo.mimeType) ? photo.mimeType : 'application/octet-stream';
+    const content = await readFile(path.join(uploadDir, photo.storageKey));
+    res.setHeader('Content-Type', safeMime);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Disposition', `inline; filename="${photo.fileName.replace(/["\\\r\n]/g, '_')}"`);
+    res.setHeader('Cache-Control', 'private, no-store');
+    res.end(content);
+  } catch (e) { next(e); }
 });
 router.delete('/:id/intake-photos/:photoId', requireRoles('ADMIN', 'ADVISOR'), async (req, res, next) => {
   try { const actorId = actor(res); const photo = await prisma.intakePhoto.findFirstOrThrow({ where: { id: req.params.photoId, workOrderId: req.params.id } }); await prisma.$transaction(async tx => { await tx.intakePhoto.delete({ where: { id: photo.id } }); await tx.workOrderEvent.create({ data: { workOrderId: req.params.id, actorId, action: 'intake_photo_removed', fromValue: { photoId: photo.id, fileName: photo.fileName } } }); }); await unlink(path.join(uploadDir, photo.storageKey)).catch(() => undefined); res.status(204).end(); } catch (e) { next(e); }

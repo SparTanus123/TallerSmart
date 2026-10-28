@@ -11,6 +11,7 @@
     "lint": "npx pnpm -F web lint"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.1",
     "typescript": "^5.7.0"
   }
 }
