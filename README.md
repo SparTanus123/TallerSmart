@@ -29,7 +29,7 @@ Requisitos: Node.js, pnpm y Docker Desktop con el motor de contenedores iniciado
    pnpm --filter @tallersmart/api db:seed
    ```
 
-5. En dos terminales, ejecuta `pnpm --filter @tallersmart/api dev` y `pnpm --filter web dev`.
+5. Ejecuta `pnpm dev`. El comando inicia PostgreSQL y espera a que esté listo antes de levantar la API y la web. En siguientes sesiones no necesitas iniciar la base por separado.
 
 La interfaz queda en `http://localhost:3000`; API y estado de base de datos en `http://localhost:3001/health`. El seed crea datos identificados como muestra para recorrer recepción. No son datos de un taller validado.
 
