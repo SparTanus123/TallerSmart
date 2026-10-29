@@ -186,7 +186,7 @@ Estoy conectado con la API de Gemini para asistirte en tiempo real con:
     const ot = orders.find((o) => o.id === orderId);
     if (ot) {
       setIntakeComplaint(ot.complaint);
-      setIntakeVehicle(`${ot.vehicle.make} ${ot.vehicle.model} (${ot.vehicle.year}) · ${ot.vehicle.plate}`);
+      setIntakeVehicle(`${ot.vehicle.make}${ot.vehicle.model ? ` ${ot.vehicle.model}` : ""} (${ot.vehicle.year}) · ${ot.vehicle.plate}`);
       setIntakeMileage(String(ot.mileageIn));
     }
   };
@@ -225,7 +225,7 @@ Estoy conectado con la API de Gemini para asistirte en tiempo real con:
     const v = vehicles.find((item) => item.id === vehId);
     if (v) {
       setPrevMake(v.make);
-      setPrevModel(v.model);
+      setPrevModel(v.model ?? "");
       setPrevYear(v.year);
       setPrevMileage(v.mileage);
     }
@@ -265,7 +265,7 @@ Estoy conectado con la API de Gemini para asistirte en tiempo real con:
     const ot = orders.find((o) => o.id === orderId);
     if (ot) {
       setReportClient(ot.client.name);
-      setReportVehicle(`${ot.vehicle.make} ${ot.vehicle.model} (${ot.vehicle.year}) · Placa: ${ot.vehicle.plate}`);
+      setReportVehicle(`${ot.vehicle.make}${ot.vehicle.model ? ` ${ot.vehicle.model}` : ""} (${ot.vehicle.year}) · Placa: ${ot.vehicle.plate}`);
       setReportDiagnosis(ot.diagnosis || ot.complaint);
       setReportNotes(ot.notes || "Reemplazo de piezas y prueba de ruta satisfactoria.");
       const parts = ot.items.map((i) => `${i.name} (x${i.quantity})`).join(", ");
@@ -618,7 +618,7 @@ Estoy conectado con la API de Gemini para asistirte en tiempo real con:
                 <option value="">Selecciona una OT para autocompletar...</option>
                 {orders.map((ot) => (
                   <option key={ot.id} value={ot.id}>
-                    {ot.number} · {ot.vehicle.make} {ot.vehicle.model} ({ot.vehicle.plate})
+                    {ot.number} · {ot.vehicle.make}{ot.vehicle.model ? ` ${ot.vehicle.model}` : ""} ({ot.vehicle.plate})
                   </option>
                 ))}
               </select>
@@ -817,7 +817,7 @@ Estoy conectado con la API de Gemini para asistirte en tiempo real con:
                   <option value="">Ingreso manual...</option>
                   {vehicles.map((v) => (
                     <option key={v.id} value={v.id}>
-                      {v.plate} · {v.make} {v.model} ({v.mileage.toLocaleString()} km)
+                      {v.plate} · {v.make}{v.model ? ` ${v.model}` : ""} ({v.mileage.toLocaleString("es-CO")} km)
                     </option>
                   ))}
                 </select>

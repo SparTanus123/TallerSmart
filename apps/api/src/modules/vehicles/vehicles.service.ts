@@ -1,9 +1,45 @@
 import { prisma } from '../../lib/prisma';
+
 export function listVehicles(search = '', clientId?: string) {
   const q = search.trim();
-  return prisma.vehicle.findMany({ where: { ...(clientId ? { currentClientId: clientId } : {}), ...(q ? { OR: [{ plate: { contains: q, mode: 'insensitive' } }, { make: { contains: q, mode: 'insensitive' } }, { model: { contains: q, mode: 'insensitive' } }] } : {}) }, include: { currentClient: true }, orderBy: { plate: 'asc' } });
+  return prisma.vehicle.findMany({
+    where: {
+      ...(clientId ? { currentClientId: clientId } : {}),
+      ...(q
+        ? {
+            OR: [
+              { plate: { contains: q, mode: 'insensitive' } },
+              { make: { contains: q, mode: 'insensitive' } },
+              { model: { contains: q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    },
+    include: { currentClient: true },
+    orderBy: { plate: 'asc' },
+  });
 }
-export async function createVehicle(data: { currentClientId: string; plate: string; vin?: string; make: string; model: string; year: number; mileage: number; color?: string }) {
-  if (!await prisma.client.findFirst({ where: { id: data.currentClientId } })) throw Object.assign(new Error('CLIENT_NOT_FOUND'), { status: 404 });
-  return prisma.vehicle.create({ data: { ...data, vin: data.vin || null, color: data.color || null }, include: { currentClient: true } });
+
+export async function createVehicle(data: {
+  currentClientId: string;
+  plate: string;
+  vin?: string;
+  make: string;
+  model?: string;
+  year: number;
+  mileage: number;
+  color?: string;
+}) {
+  if (!(await prisma.client.findFirst({ where: { id: data.currentClientId } }))) {
+    throw Object.assign(new Error('CLIENT_NOT_FOUND'), { status: 404 });
+  }
+  return prisma.vehicle.create({
+    data: {
+      ...data,
+      model: data.model ?? '',
+      vin: data.vin || null,
+      color: data.color || null,
+    },
+    include: { currentClient: true },
+  });
 }

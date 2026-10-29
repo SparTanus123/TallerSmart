@@ -31,11 +31,11 @@ export default function TopBar() {
         <div className="hidden h-4 w-px bg-line sm:block" />
         <button
           onClick={() => setPaletteOpen(true)}
-          aria-label="Buscar por patente, orden de trabajo o cliente"
+          aria-label="Buscar por placa, orden de trabajo o cliente"
           className="flex h-10 w-10 shrink-0 items-center justify-center gap-2 rounded-md text-fg-3 transition-colors hover:bg-surface-2 hover:text-fg sm:h-8 sm:w-auto sm:justify-start sm:bg-canvas sm:px-2.5 sm:text-[13px]"
         >
           <Icon name="search" size={16} />
-          <span className="hidden md:inline">Buscar por patente, OT o cliente...</span>
+          <span className="hidden md:inline">Buscar por placa, OT o cliente...</span>
           <span className="kbd ml-2 hidden lg:inline">?K</span>
         </button>
       </div>

@@ -63,7 +63,7 @@ export default function CommandPalette({
           <input
             autoFocus
             className="h-14 flex-1 bg-transparent text-[15px] text-fg outline-none placeholder:text-fg-4"
-            placeholder="Buscar patente, cliente, OT, o saltar a..."
+            placeholder="Buscar placa, cliente, OT, o saltar a..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />{" "}
@@ -97,7 +97,7 @@ export default function CommandPalette({
                           {ot.client.name}
                         </div>{" "}
                         <div className="text-[12px] text-fg-3">
-                          {ot.vehicle.make} {ot.vehicle.model}
+                          {ot.vehicle.make}{ot.vehicle.model ? ` ${ot.vehicle.model}` : ""}
                         </div>{" "}
                       </div>{" "}
                     </div>{" "}

@@ -25,7 +25,7 @@ export interface Vehicle {
   plate: string
   vin: string
   make: string
-  model: string
+  model?: string
   year: number
   mileage: number
   color: string
@@ -58,7 +58,7 @@ export interface IntakePhoto {
 
 export interface WorkOrderAuditEntry {
   id: string
-  action: "created" | "status_changed" | "record_updated" | "report_approved" | "report_draft_updated" | "additional_work_requested" | "item_authorization_changed"
+  action: "created" | "status_changed" | "record_updated" | "report_approved" | "report_draft_updated" | "additional_work_requested" | "item_authorization_changed" | "technician_assigned"
   actor: string
   at: string
   fromStatus?: OTStatus

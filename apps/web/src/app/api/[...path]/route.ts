@@ -15,7 +15,7 @@ async function proxy(request: NextRequest, context: Context) {
   const target = (process.env.API_PROXY_TARGET ?? "http://localhost:3001").replace(/\/$/, "")
   const search = request.nextUrl.search
   const headers = new Headers(request.headers)
-  for (const name of ["host", "origin", "connection", "content-length", "accept-encoding"]) headers.delete(name)
+  for (const name of ["host", "origin", "connection", "content-length", "accept-encoding", "expect"]) headers.delete(name)
   const hasBody = !["GET", "HEAD"].includes(request.method)
   try {
     const upstream = await fetch(`${target}/api/${path.map(encodeURIComponent).join("/")}${search}`, {
@@ -33,7 +33,8 @@ async function proxy(request: NextRequest, context: Context) {
       for (const cookie of getSetCookie.call(upstream.headers)) responseHeaders.append("set-cookie", cookie)
     }
     return new Response(upstream.body, { status: upstream.status, statusText: upstream.statusText, headers: responseHeaders })
-  } catch {
+  } catch (err) {
+    console.error("Proxy fetch error:", err)
     return Response.json(
       { error: "API_UNAVAILABLE", message: "No se pudo conectar con el servidor backend (API). Asegúrate de que el servicio backend y la base de datos estén iniciados." },
       { status: 503 }

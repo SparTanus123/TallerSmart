@@ -95,14 +95,14 @@ export const URGENCY_LABEL = {
 } as const
 
 export function money(n: number): string {
-  return "$" + n.toLocaleString("es-CL")
+  return "$" + n.toLocaleString("es-CO")
 }
 
 export function moneyK(n: number): string {
   if (n >= 1_000_000)
     return (
       "$" +
-      (n / 1_000_000).toLocaleString("es-CL", { maximumFractionDigits: 1 }) +
+      (n / 1_000_000).toLocaleString("es-CO", { maximumFractionDigits: 1 }) +
       "M"
     )
   if (n >= 1000) return "$" + Math.round(n / 1000) + "K"
@@ -110,13 +110,19 @@ export function moneyK(n: number): string {
 }
 
 export function km(n: number): string {
-  return n.toLocaleString("es-CL") + " km"
+  return n.toLocaleString("es-CO") + " km"
 }
 
-/** Chilean plate formatting: BCDF42 → BCDF·42 */
+/** Colombian plate formatting: ABC123 → ABC·123 or ABC12D → ABC·12D */
 export function formatPlate(p: string): string {
-  const s = p.toUpperCase().replace(/[^A-Z0-9]/g, "")
-  return s.length > 4 ? `${s.slice(0, s.length - 2)}·${s.slice(-2)}` : s
+  const s = (p ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "")
+  if (s.length === 6) {
+    return `${s.slice(0, 3)}·${s.slice(3)}`
+  }
+  if (s.length > 3) {
+    return `${s.slice(0, 3)}·${s.slice(3)}`
+  }
+  return s
 }
 
 export function initials(name: string): string {
@@ -129,7 +135,7 @@ export function initials(name: string): string {
 }
 
 export function bodyType(v: Vehicle): "pickup" | "car" {
-  return /hilux|ranger|l200|navara|amarok|frontier/i.test(v.model)
+  return /hilux|ranger|l200|navara|amarok|frontier/i.test(v.model ?? "")
     ? "pickup"
     : "car"
 }
@@ -317,7 +323,7 @@ export function predictMaintenance(
       confidence: 4,
       reasons: [
         "Intervalo estándar de 10.000 km",
-        `Uso promedio estimado: ${KM_PER_MONTH.toLocaleString("es-CL")} km/mes`,
+        `Uso promedio estimado: ${KM_PER_MONTH.toLocaleString("es-CO")} km/mes`,
         cite,
       ],
     },
@@ -422,14 +428,15 @@ export function draftReport(
   const services = ot.items
     .filter((i) => i.type === "service")
     .map((i) => i.name)
+  const vehicleName = [ot.vehicle.make, ot.vehicle.model].filter(Boolean).join(" ")
   if (tone === "tecnico") {
-    return `${ot.number} · ${ot.vehicle.make} ${ot.vehicle.model} ${ot.vehicle.year} · ${formatPlate(ot.vehicle.plate)}\n\nMotivo: ${ot.complaint}\nDiagnóstico: ${ot.diagnosis ?? "Pendiente."}\n\nTrabajos: ${services.join("; ") || ot.notes || "—"}.\nRepuestos: ${parts.join("; ") || "—"}.\n\nKm ingreso: ${ot.mileageIn.toLocaleString("es-CL")}. Total: ${money(ot.total)}.`
+    return `${ot.number} · ${vehicleName} ${ot.vehicle.year} · ${formatPlate(ot.vehicle.plate)}\n\nMotivo: ${ot.complaint}\nDiagnóstico: ${ot.diagnosis ?? "Pendiente."}\n\nTrabajos: ${services.join("; ") || ot.notes || "—"}.\nRepuestos: ${parts.join("; ") || "—"}.\n\nKm ingreso: ${ot.mileageIn.toLocaleString("es-CO")}. Total: ${money(ot.total)}.`
   }
-  return `Estimado/a ${ot.client.name}:\n\nSu ${ot.vehicle.make} ${ot.vehicle.model} (patente ${formatPlate(ot.vehicle.plate)}) ingresó por: "${ot.complaint.toLowerCase()}"\n\n${
+  return `Estimado/a ${ot.client.name}:\n\nSu ${vehicleName} (placa ${formatPlate(ot.vehicle.plate)}) ingresó por: "${ot.complaint.toLowerCase()}"\n\n${
     ot.diagnosis
       ? `Tras la revisión, encontramos que ${ot.diagnosis.charAt(0).toLowerCase() + ot.diagnosis.slice(1)}`
       : "Nuestro equipo está finalizando el diagnóstico."
   }\n\nTrabajo registrado: ${services.join(", ").toLowerCase() || ot.notes || "la revisión correspondiente"}${
     parts.length ? `, instalando ${parts.length} repuesto(s) nuevos` : ""
-  }.\n\nTotal del servicio: ${money(ot.total)} CLP.\n\nGracias por confiar en TallerSmart.`
+  }.\n\nTotal del servicio: ${money(ot.total)} COP.\n\nGracias por confiar en TallerSmart.`
 }

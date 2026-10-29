@@ -32,7 +32,7 @@ export default function OTDrawer({
   onUpdate: (ot: WorkOrder) => void
   role: UserRole
 }) {
-  const { refreshOrders, uploadIntakePhotos } = useGlobal()
+  const { refreshOrders, uploadIntakePhotos, technicians, assignTechnician } = useGlobal()
   const [tab, setTab] = useState<"resumen" | "items" | "ia">("resumen")
   const [catalog, setCatalog] = useState<{ id: string; type: "SERVICE" | "PART"; name: string; code: string }[]>([])
   const [catalogId, setCatalogId] = useState("")
@@ -58,7 +58,7 @@ export default function OTDrawer({
     (Boolean(ot.reportApprovedAt) && ot.approvedReportSnapshot === draft)
   const handleAdvance = () => {
     if (next === "completed" && !ot.diagnosis?.trim()) return
-    if (next === "delivered" && !approved) return
+    if (next === "delivered" && !canAuthorize) return
     if (next)
       onUpdate({ ...ot, status: next, updatedAt: new Date().toISOString() })
   }
@@ -133,7 +133,7 @@ export default function OTDrawer({
             </div>{" "}
             <div className="text-[14px] text-fg-2">
               {" "}
-              {ot.vehicle.make} {ot.vehicle.model} {ot.vehicle.year} ·{" "}
+              {ot.vehicle.make}{ot.vehicle.model ? ` ${ot.vehicle.model}` : ""} {ot.vehicle.year} ·{" "}
               <Plate value={ot.vehicle.plate} />{" "}
             </div>{" "}
           </div>{" "}
@@ -232,9 +232,11 @@ export default function OTDrawer({
                           ? "Orden creada"
                           : entry.action === "status_changed"
                             ? `Estado: ${entry.fromStatus} → ${entry.toStatus}`
-                            : entry.action === "record_updated"
-                              ? `Registro técnico actualizado: ${entry.details?.join(", ")}`
-                              : "Informe aprobado"}
+                            : entry.action === "technician_assigned"
+                              ? "Técnico asignado"
+                              : entry.action === "record_updated"
+                                ? `Registro técnico actualizado: ${entry.details?.join(", ")}`
+                                : "Informe aprobado"}
                       </span>
                       <span className="text-fg-3">
                         {" "}
@@ -265,14 +267,48 @@ export default function OTDrawer({
               </div>{" "}
               <div className="card p-4">
                 {" "}
-                <div className="eyebrow mb-2">Técnico Asignado</div>{" "}
-                <div className="flex items-center gap-2">
-                  {" "}
-                  <Avatar name={ot.technicianName} size={24} />{" "}
-                  <div className="text-[14px] font-medium text-fg">
-                    {ot.technicianName}
-                  </div>{" "}
+                <div className="mb-2 flex items-center justify-between">
+                  <div className="eyebrow">Técnico Asignado</div>
+                  {canAuthorize && editable && (
+                    <span className="text-[11px] text-fg-3">Admin / Asesora</span>
+                  )}
                 </div>{" "}
+                {canAuthorize && editable ? (
+                  <div className="flex items-center gap-2">
+                    <Avatar name={ot.technicianName} size={24} />
+                    <select
+                      className="field h-8 flex-1 text-xs font-medium"
+                      value={ot.technicianId || ""}
+                      disabled={lineBusy}
+                      onChange={(e) => {
+                        const newId = e.target.value || null
+                        const tech = technicians.find((t) => t.id === newId)
+                        void changeLine(async () => {
+                          await assignTechnician(ot.id, newId)
+                        })
+                        onUpdate({
+                          ...ot,
+                          technicianId: newId ?? "",
+                          technicianName: tech?.name ?? "Sin asignar",
+                        })
+                      }}
+                    >
+                      <option value="">Sin asignar</option>
+                      {technicians.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Avatar name={ot.technicianName} size={24} />
+                    <div className="text-[14px] font-medium text-fg">
+                      {ot.technicianName}
+                    </div>
+                  </div>
+                )}{" "}
               </div>{" "}
             </div>{" "}
             <div className="card p-4">
@@ -437,12 +473,15 @@ export default function OTDrawer({
           <button
             className="btn btn-primary group"
             onClick={handleAdvance}
-            disabled={(next === "completed" && !ot.diagnosis?.trim()) || (next === "delivered" && !approved)}
+            disabled={
+              (next === "completed" && !ot.diagnosis?.trim()) ||
+              (next === "delivered" && !canAuthorize)
+            }
             title={
               next === "completed" && !ot.diagnosis?.trim()
                 ? "Registra y guarda el diagnóstico antes de completar la orden"
-                : next === "delivered" && !approved
-                  ? "Revisa y aprueba el informe en la pestaña Asistente IA"
+                : next === "delivered" && !canAuthorize
+                  ? "Solo el administrador o la asesora pueden mover el vehículo a entregado"
                   : undefined
             }
           >

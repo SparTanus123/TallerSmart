@@ -13,20 +13,20 @@ export const technicians: Technician[] = [
 ];
 
 export const clients: Client[] = [
-  { id: 'c1', name: 'Andrés Ramírez', phone: '+56 9 8821 4433', email: 'andres.ramirez@gmail.com', createdAt: '2024-01-15', type: 'personal' },
-  { id: 'c2', name: 'Valentina Torres', phone: '+56 9 7765 3322', email: 'v.torres@empresa.cl', createdAt: '2024-03-08', type: 'personal' },
-  { id: 'c3', name: 'Marcos Fuentes', phone: '+56 9 9234 5678', email: 'marcos.f@hotmail.com', createdAt: '2024-02-20', type: 'personal' },
-  { id: 'c4', name: 'Isabel Castillo', phone: '+56 9 6543 2109', email: 'isabel.c@mail.com', createdAt: '2024-05-11', type: 'personal' },
-  { id: 'c5', name: 'LogiTrans SpA', phone: '+56 2 2345 6789', email: 'flota@logitrans.cl', createdAt: '2023-11-01', type: 'empresa' },
+  { id: 'c1', name: 'Andrés Ramírez', phone: '+57 310 882 1443', email: 'andres.ramirez@gmail.com', createdAt: '2024-01-15', type: 'personal' },
+  { id: 'c2', name: 'Valentina Torres', phone: '+57 320 776 5332', email: 'v.torres@empresa.co', createdAt: '2024-03-08', type: 'personal' },
+  { id: 'c3', name: 'Marcos Fuentes', phone: '+57 301 923 4567', email: 'marcos.f@hotmail.com', createdAt: '2024-02-20', type: 'personal' },
+  { id: 'c4', name: 'Isabel Castillo', phone: '+57 315 654 3210', email: 'isabel.c@mail.com', createdAt: '2024-05-11', type: 'personal' },
+  { id: 'c5', name: 'LogiTrans SAS', phone: '+57 601 234 5678', email: 'flota@logitrans.co', createdAt: '2023-11-01', type: 'empresa' },
 ];
 
 export const vehicles: Vehicle[] = [
-  { id: 'v1', clientId: 'c1', plate: 'BCDF42', vin: '1HGCM82633A123456', make: 'Toyota', model: 'Hilux', year: 2019, mileage: 87450, color: 'Blanco', notes: 'GNV instalado' },
-  { id: 'v2', clientId: 'c2', plate: 'GHJK71', vin: '2T1BURHE0JC052890', make: 'Chevrolet', model: 'Captiva', year: 2021, mileage: 43200, color: 'Gris Plata', notes: '' },
-  { id: 'v3', clientId: 'c3', plate: 'AABC91', vin: '3VWFE21C04M000001', make: 'Volkswagen', model: 'Golf', year: 2018, mileage: 112000, color: 'Negro', notes: 'Cliente frecuente, descuento 10%' },
-  { id: 'v4', clientId: 'c4', plate: 'BCDE55', vin: '5XYKT3A14CG215640', make: 'Kia', model: 'Sportage', year: 2022, mileage: 28900, color: 'Rojo Fuego', notes: '' },
-  { id: 'v5', clientId: 'c5', plate: 'FLOT01', vin: '8AFBA3826GJ000111', make: 'Ford', model: 'Ranger', year: 2020, mileage: 156000, color: 'Blanco', notes: 'Flota — prioridad alta' },
-  { id: 'v6', clientId: 'c5', plate: 'FLOT02', vin: '8AFBA3826GJ000222', make: 'Ford', model: 'Ranger', year: 2020, mileage: 148000, color: 'Blanco', notes: 'Flota empresarial' },
+  { id: 'v1', clientId: 'c1', plate: 'ABC123', vin: '1HGCM82633A123456', make: 'Toyota', model: 'Hilux', year: 2019, mileage: 87450, color: 'Blanco', notes: 'GNV instalado' },
+  { id: 'v2', clientId: 'c2', plate: 'GHJ781', vin: '2T1BURHE0JC052890', make: 'Chevrolet', model: 'Captiva', year: 2021, mileage: 43200, color: 'Gris Plata', notes: '' },
+  { id: 'v3', clientId: 'c3', plate: 'KLS452', vin: '3VWFE21C04M000001', make: 'Volkswagen', model: 'Golf', year: 2018, mileage: 112000, color: 'Negro', notes: 'Cliente frecuente, descuento 10%' },
+  { id: 'v4', clientId: 'c4', plate: 'BCD345', vin: '5XYKT3A14CG215640', make: 'Kia', model: 'Sportage', year: 2022, mileage: 28900, color: 'Rojo Fuego', notes: '' },
+  { id: 'v5', clientId: 'c5', plate: 'FLO101', vin: '8AFBA3826GJ000111', make: 'Ford', model: 'Ranger', year: 2020, mileage: 156000, color: 'Blanco', notes: 'Flota — prioridad alta' },
+  { id: 'v6', clientId: 'c5', plate: 'FLO102', vin: '8AFBA3826GJ000222', make: 'Ford', model: 'Ranger', year: 2020, mileage: 148000, color: 'Blanco', notes: 'Flota empresarial' },
 ];
 
 export const workOrders: WorkOrder[] = [
