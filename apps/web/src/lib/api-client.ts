@@ -17,7 +17,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
-  downloadWorkOrderDocument: async (id: string, type: "intake" | "quotation" | "delivery") => {
+  downloadWorkOrderDocument: async (id: string, type: "intake" | "quotation" | "delivery" | "receipt") => {
     const response = await fetch(`${API_URL}/work-orders/${id}/documents/${type}`, { credentials: "include", cache: "no-store" })
     if (!response.ok) {
       const payload = await response.json().catch(() => ({}))
@@ -64,6 +64,7 @@ export const api = {
   createUser: (body: { name: string; email: string; password: string; role: "ADMIN" | "ADVISOR" | "TECHNICIAN" }) => request<unknown>("/users", { method: "POST", body: JSON.stringify(body) }),
   updateUser: (id: string, body: { active?: boolean; role?: "ADMIN" | "ADVISOR" | "TECHNICIAN"; password?: string }) => request<unknown>(`/users/${id}`, { method: "PATCH", body: JSON.stringify(body) }),
   aiStatus: () => request<{ agent: { name: string; title: string; version: string; description: string; capabilities: string[] }; gemini: { ok: boolean; model: string; latencyMs: number; error?: string } }>("/ai/status"),
+  aiBriefing: () => request<{ briefing: string; suggestions: Array<{ id: string; icon: string; title: string; prompt: string; workOrderId?: string }>; stats: { total: number; waitingParts: number; inProgress: number; diagnosing: number; highUrgency: number; unassigned: number } }>("/ai/briefing"),
   aiChat: (body: { messages: { role: "user" | "model"; content: string }[]; workOrderId?: string; vehicleId?: string }) => request<{ reply: string; model: string; agent: string }>("/ai/chat", { method: "POST", body: JSON.stringify(body) }),
   aiIntake: (body: { complaint: string; vehicleInfo?: string; mileage?: number; workOrderId?: string }) => request<{ success: boolean; data?: { sintomas_extraidos: string[]; sistema_afectado: string; subsistema: string; nivel_urgencia: "BAJO" | "MEDIO" | "ALTO"; razon_urgencia: string; diagnosticos_recomendados: string[]; nota_mecanico: string }; raw?: string; model: string; agent: string }>("/ai/intake", { method: "POST", body: JSON.stringify(body) }),
   aiPreventive: (body: { vehicleId?: string; make?: string; model?: string; year?: number; mileage?: number }) => request<{ success: boolean; data?: Array<{ servicio: string; prioridad: "URGENTE" | "RECOMENDADO" | "PROGRAMAR"; km_actual: number; km_intervalo_fabricante: number; razon: string; criticidad: string }>; vehicle?: { make: string; model: string; year: number; mileage: number }; model: string; agent: string }>("/ai/preventive", { method: "POST", body: JSON.stringify(body) }),

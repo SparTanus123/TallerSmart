@@ -5,7 +5,7 @@ type Order = Prisma.WorkOrderGetPayload<{ include: {
   vehicle: { include: { currentClient: true } }; client: true; technician: true; items: true;
   reportApprovedBy: true;
 } }>;
-export type WorkOrderDocumentType = 'intake' | 'quotation' | 'delivery';
+export type WorkOrderDocumentType = 'intake' | 'quotation' | 'delivery' | 'receipt';
 
 const money = (value: number) => new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(value);
 const date = (value: Date | string) => new Intl.DateTimeFormat('es-CO', { dateStyle: 'long', timeZone: 'America/Bogota' }).format(new Date(value));
@@ -66,7 +66,12 @@ function itemTable(doc: PDFKit.PDFDocument, items: Order['items']) {
 }
 
 export async function generateWorkOrderPdf(order: Order, type: WorkOrderDocumentType): Promise<Buffer> {
-  const titles: Record<WorkOrderDocumentType, string> = { intake: 'Hoja de recepción · Comprobante de ingreso', quotation: 'Cotización · Presupuesto formal', delivery: 'Informe técnico final · Hoja de entrega' };
+  const titles: Record<WorkOrderDocumentType, string> = {
+    intake: 'Hoja de recepción · Comprobante de ingreso',
+    quotation: 'Cotización · Presupuesto formal',
+    delivery: 'Informe técnico final · Hoja de entrega',
+    receipt: 'Recibo de cobro · Comprobante de pago',
+  };
   const { doc, done, field } = createDocument(titles[type], order);
   if (type === 'intake') {
     section(doc, 'Solicitud del cliente', order.complaint);
@@ -85,6 +90,20 @@ export async function generateWorkOrderPdf(order: Order, type: WorkOrderDocument
     doc.font('Helvetica-Bold').fontSize(12).fillColor('#16324F').text(`Total estimado: ${money(subtotal + tax)}`, { align: 'right' });
     doc.moveDown(0.8).font('Helvetica').fontSize(9).fillColor('#475569').text(`Validez: 15 días calendario desde ${date(new Date())}. Valores expresados en pesos colombianos. Los trabajos adicionales requieren autorización previa del cliente. La cotización incluye únicamente los ítems aprobados registrados en la orden.`);
     doc.moveDown(1.2); field('Aceptación del cliente', '________________________________________');
+  } else if (type === 'receipt') {
+    section(doc, 'Motivo de ingreso', order.complaint);
+    section(doc, 'Diagnóstico', order.diagnosis ?? 'Sin diagnóstico registrado.');
+    section(doc, 'Arreglos realizados', order.approvedReportSnapshot ?? order.deliveryReportDraft ?? order.notes ?? 'Sin detalle adicional registrado.');
+    const items = order.items.filter(item => item.authorizationStatus === 'APPROVED');
+    const subtotal = itemTable(doc, items);
+    const parts = items.filter(item => item.type === 'PART').reduce((sum, item) => sum + lineTotal(item), 0);
+    const labor = items.filter(item => item.type === 'SERVICE').reduce((sum, item) => sum + lineTotal(item), 0);
+    doc.moveDown(0.5).font('Helvetica').fontSize(10).fillColor('#334155').text(`Repuestos: ${money(parts)}`, { align: 'right' });
+    doc.text(`Mano de obra: ${money(labor)}`, { align: 'right' });
+    doc.font('Helvetica-Bold').fontSize(13).fillColor('#16324F').text(`TOTAL A PAGAR: ${money(subtotal)}`, { align: 'right' });
+    doc.moveDown(0.7).font('Helvetica').fontSize(9).fillColor('#475569').text('Recibo de cobro de los trabajos y repuestos aprobados registrados en esta orden. Valores expresados en pesos colombianos.');
+    field('Técnico responsable', order.technician?.name ?? 'No asignado');
+    doc.moveDown(1.2); field('Firma del cliente', '________________________________________');
   } else {
     section(doc, 'Solicitud reportada', order.complaint);
     section(doc, 'Diagnóstico técnico', order.diagnosis);

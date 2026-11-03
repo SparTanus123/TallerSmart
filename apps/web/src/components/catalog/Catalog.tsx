@@ -35,7 +35,63 @@ export default function Catalog() {
     {error && <p role="alert" className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-800">{error}</p>}
     {showForm && <form onSubmit={addItem} className="card mb-5 grid gap-3 p-4 md:grid-cols-3"><select className="field h-10" name="type" defaultValue={editing?.type ?? "SERVICE"}><option value="SERVICE">Servicio</option><option value="PART">Repuesto</option></select><input className="field h-10" name="code" placeholder="Código" defaultValue={editing?.code} required /><input className="field h-10" name="name" placeholder="Nombre del ítem" defaultValue={editing?.name} required minLength={2} /><input className="field h-10" name="description" placeholder="Descripción" defaultValue={editing?.description} /><input className="field h-10" name="unitPrice" type="number" min="0" step="0.01" placeholder="Precio unitario" defaultValue={editing?.unitPrice} required /><input className="field h-10" name="unit" placeholder="Unidad" defaultValue={editing?.unit ?? "unidad"} /><div className="flex gap-2 md:col-span-3"><button className="btn btn-primary" disabled={busy}>{busy ? "Guardando…" : editing ? "Guardar cambios" : "Guardar"}</button><button type="button" className="btn btn-secondary" onClick={() => { setShowForm(false); setEditing(null) }}>Cancelar</button></div></form>}
     <div className="card overflow-hidden"><div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-4"><input className="field h-9 w-full max-w-sm" placeholder="Buscar por código o nombre" value={search} onChange={e => setSearch(e.target.value)} /><div className="flex gap-2">{[["ALL","Todos"],["SERVICE","Servicios"],["PART","Repuestos"]].map(([value,label]) => <button key={value} className={`btn btn-sm ${filter === value ? "btn-primary" : "btn-secondary"}`} onClick={() => setFilter(value)}>{label}</button>)}</div></div>
-      {loading ? <p className="p-8 text-center text-sm text-fg-3">Cargando catálogo…</p> : <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead className="bg-surface-2 text-xs uppercase text-fg-3"><tr><th className="p-3">Código</th><th className="p-3">Tipo</th><th className="p-3">Nombre</th><th className="p-3">Descripción</th><th className="p-3">Precio</th>{role === "admin" && <th className="p-3">Acciones</th>}</tr></thead><tbody>{filtered.map(item => <tr key={item.id} className={`border-t border-line ${item.active ? "" : "opacity-50"}`}><td className="p-3 font-mono">{item.code}</td><td className="p-3">{item.type === "PART" ? "Repuesto" : "Servicio"}</td><td className="p-3 font-medium">{item.name}{!item.active && <span className="ml-2 text-xs text-red-700">Inactivo</span>}</td><td className="p-3 text-fg-3">{item.description || "—"}</td><td className="p-3 font-mono">${item.unitPrice.toLocaleString("es-CO")} / {item.unit}</td>{role === "admin" && <td className="flex gap-2 p-3"><button className="btn btn-secondary btn-sm" onClick={() => { setEditing(item); setShowForm(true) }}>Editar</button><button className="btn btn-secondary btn-sm" disabled={busy} onClick={() => void toggleItem(item)}>{item.active ? "Desactivar" : "Reactivar"}</button></td>}</tr>)}</tbody></table>{!filtered.length && <p className="p-8 text-center text-sm text-fg-3">{items.length ? "No hay coincidencias." : "Todavía no hay ítems en el catálogo."}</p>}</div>}
+      {loading ? (
+        <p className="p-8 text-center text-sm text-fg-3">Cargando catálogo…</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-surface-2 text-xs uppercase text-fg-3">
+              <tr>
+                <th className="p-3">Código</th>
+                <th className="p-3">Tipo</th>
+                <th className="p-3">Nombre</th>
+                <th className="p-3">Descripción</th>
+                <th className="p-3">Precio</th>
+                {role === "admin" && <th className="p-3">Acciones</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((item) => (
+                <tr key={item.id} className={`border-t border-line ${item.active ? "" : "opacity-50"}`}>
+                  <td className="p-3 font-mono">{item.code}</td>
+                  <td className="p-3">{item.type === "PART" ? "Repuesto" : "Servicio"}</td>
+                  <td className="p-3 font-medium">
+                    {item.name}
+                    {!item.active && <span className="ml-2 text-xs text-red-700">Inactivo</span>}
+                  </td>
+                  <td className="p-3 text-fg-3">{item.description || "—"}</td>
+                  <td className="p-3 font-mono">${item.unitPrice.toLocaleString("es-CO")} / {item.unit}</td>
+                  {role === "admin" && (
+                    <td className="flex gap-2 p-3">
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => {
+                          setEditing(item);
+                          setShowForm(true);
+                        }}
+                      >
+                        Editar
+                      </button>
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        disabled={busy}
+                        onClick={() => void toggleItem(item)}
+                      >
+                        {item.active ? "Desactivar" : "Reactivar"}
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {!filtered.length && (
+            <p className="p-8 text-center text-sm text-fg-3">
+              {items.length ? "No hay coincidencias." : "Todavía no hay ítems en el catálogo."}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   </section>
 }

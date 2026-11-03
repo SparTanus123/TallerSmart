@@ -243,13 +243,16 @@ router.get('/:id', async (req, res, next) => {
 router.get('/:id/documents/:type', async (req, res, next) => {
   try {
     const type = req.params.type;
-    if (!['intake', 'quotation', 'delivery'].includes(type)) {
+    if (!['intake', 'quotation', 'delivery', 'receipt'].includes(type)) {
       return res.status(404).json({ error: 'DOCUMENT_TYPE_NOT_FOUND' });
     }
     const order = await getWorkOrder(req.params.id);
     if (!order) return res.status(404).json({ error: 'WORK_ORDER_NOT_FOUND' });
     if (type === 'delivery' && (!order.reportApprovedAt || !order.approvedReportSnapshot)) {
       return res.status(409).json({ error: 'APPROVED_REPORT_REQUIRED' });
+    }
+    if (type === 'receipt' && !['COMPLETED', 'DELIVERED'].includes(order.status)) {
+      return res.status(409).json({ error: 'ORDER_MUST_BE_COMPLETED_FOR_RECEIPT' });
     }
     const pdf = await generateWorkOrderPdf(order as Parameters<typeof generateWorkOrderPdf>[0], type as WorkOrderDocumentType);
     res.setHeader('Content-Type', 'application/pdf');

@@ -7,6 +7,7 @@ import {
 } from './ai.schema';
 import {
   getSmartMecStatus,
+  getSmartMecBriefing,
   processChat,
   analyzeIntake,
   analyzePreventive,
@@ -24,6 +25,16 @@ router.get('/status', async (_req, res, next) => {
   try {
     const status = await getSmartMecStatus();
     res.json(status);
+  } catch (e) {
+    next(e);
+  }
+});
+
+// Daily briefing and dynamic work order suggestions from database and Gemini
+router.get('/briefing', async (_req, res, next) => {
+  try {
+    const briefing = await getSmartMecBriefing();
+    res.json(briefing);
   } catch (e) {
     next(e);
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useGlobal } from "@/lib/context";
 import { api } from "@/lib/api-client";
 import { Icon } from "@/components/ui/Icon";
@@ -35,6 +35,48 @@ interface PreventiveItem {
   criticidad: string;
 }
 
+function renderCleanMessage(content: string) {
+  const lines = content.split("\n");
+
+  return (
+    <div className="space-y-1">
+      {lines.map((line, idx) => {
+        if (!line.trim()) {
+          return <div key={idx} className="h-1.5" />;
+        }
+
+        // Replace any **phrase** with clean font-medium / font-semibold span without raw asterisks
+        const parts: React.ReactNode[] = [];
+        const regex = /\*\*(.*?)\*\*/g;
+        let lastIndex = 0;
+        let match: RegExpExecArray | null;
+
+        while ((match = regex.exec(line)) !== null) {
+          if (match.index > lastIndex) {
+            parts.push(line.slice(lastIndex, match.index));
+          }
+          parts.push(
+            <span key={`${idx}-${match.index}`} className="font-semibold text-fg">
+              {match[1]}
+            </span>
+          );
+          lastIndex = regex.lastIndex;
+        }
+
+        if (lastIndex < line.length) {
+          parts.push(line.slice(lastIndex));
+        }
+
+        return (
+          <div key={idx} className="min-h-[1.25em] leading-relaxed">
+            {parts}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function AIAssistant() {
   const { orders, vehicles, user } = useGlobal();
   const [activeTab, setActiveTab] = useState<TabId>("chat");
@@ -48,22 +90,26 @@ export default function AIAssistant() {
   } | null>(null);
   const [checkingHealth, setCheckingHealth] = useState(false);
 
+  // Dynamic suggestions from server/briefing
+  const [aiSuggestions, setAiSuggestions] = useState<Array<{ id: string; icon: string; title: string; prompt: string; workOrderId?: string }>>([]);
+
   // Chat state
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome-1",
       role: "model",
-      content: `¡Hola ${user?.name ? user.name.split(" ")[0] : "taller"}! Soy **SmartMec**, el copiloto técnico inteligente de TallerSmart.
+      content: `¡Hola ${user?.name ? user.name.split(" ")[0] : "taller"}! 🚗 Soy SmartMec, el copiloto técnico inteligente de TallerSmart 🔧.
 
-Estoy conectado con la API de Gemini para asistirte en tiempo real con:
-• **Diagnóstico mecánico y códigos OBD-II** (DTCs, síntomas, posibles causas).
-• **Triaje y clasificación de fallas** en la recepción del cliente.
-• **Planes preventivos** según kilometraje y modelo del vehículo.
-• **Redacción de informes claros de entrega** para clientes.
+Tengo acceso directo a la base de datos de órdenes de trabajo, vehículos y repuestos del taller 📋. Puedo asistirte en tiempo real con:
+• 🔍 Diagnóstico mecánico y códigos OBD-II (DTCs, síntomas y posibles causas).
+• 🚗 Estado y seguimiento de Órdenes de Trabajo activas en bahía.
+• 📦 Control de repuestos y piezas en espera de proveedor.
+• ⚙️ Planes de mantenimiento preventivo según kilometraje y modelo.
+• 📑 Redacción de informes claros de entrega para clientes.
 
-¿En qué vehículo u orden de trabajo estamos trabajando hoy?`,
+¿En qué vehículo u orden de trabajo estamos trabajando hoy? 🛠️`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
-      model: "SmartMec / gemini-3-flash-preview",
+      model: "SmartMec / Gemini",
     },
   ]);
   const [chatInput, setChatInput] = useState("");
@@ -119,6 +165,90 @@ Estoy conectado con la API de Gemini para asistirte en tiempo real con:
   useEffect(() => {
     verifyConnection();
   }, []);
+
+  // Sync URL search params if navigated from dashboard
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const urlPrompt = params.get("prompt");
+      const urlOrderId = params.get("orderId");
+      if (urlPrompt) setChatInput(urlPrompt);
+      if (urlOrderId) setSelectedChatOrder(urlOrderId);
+    }
+  }, []);
+
+  // Fetch contextual suggestions from backend
+  useEffect(() => {
+    api.aiBriefing()
+      .then((data) => {
+        if (data.suggestions && data.suggestions.length > 0) {
+          setAiSuggestions(data.suggestions);
+        }
+      })
+      .catch(() => {
+        // Fallback to local computation
+      });
+  }, [orders.length]);
+
+  // Compute suggestions from real work orders in context
+  const computedSuggestions = useMemo(() => {
+    if (aiSuggestions.length > 0) return aiSuggestions;
+
+    const list: Array<{ id: string; icon: string; title: string; prompt: string; workOrderId?: string }> = [];
+
+    // Prioritize active orders
+    const activeOrders = orders.filter((o) => o.status !== "delivered" && o.status !== "completed");
+    for (const ot of activeOrders.slice(0, 3)) {
+      if (ot.status === "waiting_parts") {
+        list.push({
+          id: `sug-${ot.id}`,
+          icon: "📦",
+          title: `Repuestos: ${ot.vehicle.make} (${ot.vehicle.plate})`,
+          prompt: `📦 ¿Qué repuestos están pendientes y cuál es el plan de trabajo para la OT ${ot.number} (${ot.vehicle.make} ${ot.vehicle.model})?`,
+          workOrderId: ot.id,
+        });
+      } else if (ot.urgency === "high") {
+        list.push({
+          id: `sug-${ot.id}`,
+          icon: "🚨",
+          title: `Urgente: ${ot.vehicle.make} (${ot.vehicle.plate})`,
+          prompt: `🚨 ¿Cómo acelerar el diagnóstico y reparación de la OT ${ot.number} (${ot.vehicle.make} ${ot.vehicle.model}) con queja: "${ot.complaint}"?`,
+          workOrderId: ot.id,
+        });
+      } else {
+        list.push({
+          id: `sug-${ot.id}`,
+          icon: "🔧",
+          title: `Diagnóstico: ${ot.vehicle.make} (${ot.vehicle.plate})`,
+          prompt: `🔍 Guía técnica para diagnosticar la queja "${ot.complaint}" en ${ot.vehicle.make} ${ot.vehicle.model} (${ot.vehicle.plate}).`,
+          workOrderId: ot.id,
+        });
+      }
+    }
+
+    list.push({
+      id: "sug-status-all",
+      icon: "🚗",
+      title: "Estado general del taller",
+      prompt: "🚗 ¿Cuáles son las órdenes de trabajo activas en el taller y qué vehículos requieren atención hoy?",
+    });
+
+    list.push({
+      id: "sug-obd-dtc",
+      icon: "⚡",
+      title: "Diagnóstico OBD-II y DTCs",
+      prompt: "⚡ ¿Cómo diagnosticar los códigos de falla OBD-II más frecuentes (P0300, P0171, P0420) en el taller?",
+    });
+
+    return list;
+  }, [aiSuggestions, orders]);
+
+  const handleSelectSuggestion = (sug: { prompt: string; workOrderId?: string }) => {
+    setChatInput(sug.prompt);
+    if (sug.workOrderId) {
+      setSelectedChatOrder(sug.workOrderId);
+    }
+  };
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -491,7 +621,7 @@ Estoy conectado con la API de Gemini para asistirte en tiempo real con:
                         : "bg-canvas border border-line text-fg rounded-bl-none"
                     }`}
                   >
-                    <div className="whitespace-pre-wrap">{msg.content}</div>
+                    {renderCleanMessage(msg.content)}
                     <div
                       className="mt-1.5 flex items-center justify-between text-[11px] text-fg-3"
                     >
@@ -556,32 +686,36 @@ Estoy conectado con la API de Gemini para asistirte en tiempo real con:
           {/* Quick Shortcuts & Context Info */}
           <div className="flex flex-col gap-4 lg:col-span-1">
             <div className="card p-4">
-              <div className="eyebrow mb-2">Preguntas Sugeridas</div>
+              <div className="flex items-center justify-between mb-2">
+                <div className="eyebrow">Sugerencias por OTs</div>
+                <span className="font-mono text-[10px] text-fg-3">En vivo</span>
+              </div>
               <div className="flex flex-col gap-2">
-                {[
-                  "¿Qué significa el código OBD-II P0300 y cómo diagnosticarlo?",
-                  "¿Cuáles son las causas de un pedal de freno esponjoso?",
-                  "Intervalo de cambio de correa vs cadena en Toyota Hilux",
-                  "Procedimiento de purga de frenos con ABS",
-                  "Síntomas de falla en bomba de gasolina vs inyectores sucios",
-                ].map((prompt, i) => (
+                {computedSuggestions.map((sug) => (
                   <button
-                    key={i}
-                    onClick={() => {
-                      setChatInput(prompt);
-                    }}
-                    className="rounded-lg border border-line bg-canvas p-2.5 text-left text-[12px] text-fg-2 transition-all hover:border-brand-300 hover:bg-brand-50/50 hover:text-brand-900"
+                    key={sug.id}
+                    onClick={() => handleSelectSuggestion(sug)}
+                    className="rounded-lg border border-line bg-canvas p-2.5 text-left text-[12px] text-fg-2 transition-all hover:border-brand-400 hover:bg-brand-50/50 hover:text-brand-900 group"
                   >
-                    💡 {prompt}
+                    <div className="flex items-center gap-1.5 font-semibold text-fg">
+                      <span className="text-sm">{sug.icon}</span>
+                      <span className="truncate">{sug.title}</span>
+                    </div>
+                    <div className="mt-1 line-clamp-2 text-[11px] text-fg-3 group-hover:text-fg-2">
+                      {sug.prompt}
+                    </div>
                   </button>
                 ))}
               </div>
             </div>
 
             <div className="card p-4 bg-gradient-to-br from-indigo-50/40 to-transparent border-indigo-100">
-              <div className="text-[13px] font-semibold text-indigo-950 mb-1">Capacidad de Contexto</div>
+              <div className="text-[13px] font-semibold text-indigo-950 mb-1 flex items-center gap-1.5">
+                <span>🗄️</span>
+                <span>Conexión con Base de Datos</span>
+              </div>
               <p className="text-[12px] text-indigo-900/80 leading-relaxed">
-                Si seleccionas una Orden de Trabajo activa en el menú superior, SmartMec conocerá la placa, kilometraje, queja del cliente y repuestos instalados para asesorarte directamente en el caso.
+                SmartMec tiene acceso en tiempo real a las órdenes de trabajo, vehículos, placas, quejas de clientes y repuestos de TallerSmart 🚗. Pregúntale por cualquier vehículo o selecciona una OT en el menú superior 📋.
               </p>
             </div>
           </div>
