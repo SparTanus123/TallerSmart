@@ -21,9 +21,17 @@ const router = Router();
 const actor = (res: Response) => (res.locals.user as { id: string }).id;
 const uploadDir = path.resolve(process.env.UPLOAD_DIR ?? path.join(process.cwd(), 'storage', 'uploads'));
 
-router.get('/', async (_req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
-    res.json(await listWorkOrders());
+    const user = res.locals.user as { id: string; role: string } | undefined;
+    let technicianId: string | undefined;
+    if (user?.role === 'TECHNICIAN') {
+      technicianId = user.id;
+    } else if (typeof req.query.technicianId === 'string') {
+      technicianId = req.query.technicianId;
+    }
+    const filter = technicianId ? { technicianId } : undefined;
+    res.json(await listWorkOrders(filter));
   } catch (e) {
     next(e);
   }
@@ -234,6 +242,10 @@ router.get('/:id', async (req, res, next) => {
   try {
     const order = await getWorkOrder(req.params.id);
     if (!order) return res.status(404).json({ error: 'WORK_ORDER_NOT_FOUND' });
+    const user = res.locals.user as { id: string; role: string } | undefined;
+    if (user?.role === 'TECHNICIAN' && order.technicianId !== user.id) {
+      return res.status(403).json({ error: 'FORBIDDEN' });
+    }
     res.json(order);
   } catch (e) {
     next(e);
@@ -248,6 +260,10 @@ router.get('/:id/documents/:type', async (req, res, next) => {
     }
     const order = await getWorkOrder(req.params.id);
     if (!order) return res.status(404).json({ error: 'WORK_ORDER_NOT_FOUND' });
+    const user = res.locals.user as { id: string; role: string } | undefined;
+    if (user?.role === 'TECHNICIAN' && order.technicianId !== user.id) {
+      return res.status(403).json({ error: 'FORBIDDEN' });
+    }
     if (type === 'delivery' && (!order.reportApprovedAt || !order.approvedReportSnapshot)) {
       return res.status(409).json({ error: 'APPROVED_REPORT_REQUIRED' });
     }
@@ -268,8 +284,12 @@ router.patch('/:id/record', requireRoles('ADMIN', 'TECHNICIAN'), async (req, res
   try {
     const input = technicalRecordSchema.parse(req.body);
     const actorId = actor(res);
+    const user = res.locals.user as { id: string; role: string };
     const order = await prisma.$transaction(async tx => {
       const before = await tx.workOrder.findUniqueOrThrow({ where: { id: req.params.id } });
+      if (user.role === 'TECHNICIAN' && before.technicianId !== user.id) {
+        throw Object.assign(new Error('FORBIDDEN'), { status: 403 });
+      }
       if (before.status === 'DELIVERED') throw Object.assign(new Error('DELIVERED_ORDER_LOCKED'), { status: 409 });
       const updated = await tx.workOrder.update({
         where: { id: before.id },
@@ -301,12 +321,16 @@ router.patch('/:id/record', requireRoles('ADMIN', 'TECHNICIAN'), async (req, res
 router.patch('/:id/status', async (req, res, next) => {
   try {
     const { status } = orderStatusSchema.parse(req.body);
-    const role = res.locals.user.role as string;
+    const user = res.locals.user as { id: string; role: string };
+    const role = user.role;
     const permitted = status === 'RECEIVED' || status === 'DELIVERED' ? ['ADMIN', 'ADVISOR'] : ['ADMIN', 'TECHNICIAN'];
     if (!permitted.includes(role)) return res.status(403).json({ error: 'FORBIDDEN' });
     const actorId = actor(res);
     const order = await prisma.$transaction(async tx => {
       const before = await tx.workOrder.findUniqueOrThrow({ where: { id: req.params.id } });
+      if (role === 'TECHNICIAN' && before.technicianId !== user.id) {
+        throw Object.assign(new Error('FORBIDDEN'), { status: 403 });
+      }
       if (!allowedTransitions[before.status]?.includes(status)) {
         throw Object.assign(new Error('INVALID_STATUS_TRANSITION'), { status: 409 });
       }
@@ -421,8 +445,12 @@ router.post('/:id/items', requireRoles('ADMIN', 'ADVISOR', 'TECHNICIAN'), async 
       .object({ catalogItemId: z.string().uuid(), quantity: z.number().positive().max(10000).default(1) })
       .parse(req.body);
     const actorId = actor(res);
+    const user = res.locals.user as { id: string; role: string };
     const order = await prisma.$transaction(async tx => {
       const before = await tx.workOrder.findUniqueOrThrow({ where: { id: req.params.id } });
+      if (user.role === 'TECHNICIAN' && before.technicianId !== user.id) {
+        throw Object.assign(new Error('FORBIDDEN'), { status: 403 });
+      }
       if (before.status === 'COMPLETED' || before.status === 'DELIVERED') {
         throw Object.assign(new Error('ORDER_ITEMS_LOCKED'), { status: 409 });
       }
@@ -463,8 +491,12 @@ router.post('/:id/items/manual', requireRoles('ADMIN', 'ADVISOR', 'TECHNICIAN'),
   try {
     const input = manualItemSchema.parse(req.body);
     const actorId = actor(res);
+    const user = res.locals.user as { id: string; role: string };
     const order = await prisma.$transaction(async tx => {
       const before = await tx.workOrder.findUniqueOrThrow({ where: { id: req.params.id } });
+      if (user.role === 'TECHNICIAN' && before.technicianId !== user.id) {
+        throw Object.assign(new Error('FORBIDDEN'), { status: 403 });
+      }
       if (before.status === 'COMPLETED' || before.status === 'DELIVERED') {
         throw Object.assign(new Error('ORDER_ITEMS_LOCKED'), { status: 409 });
       }
@@ -497,8 +529,12 @@ router.patch('/:id/items/:itemId', requireRoles('ADMIN', 'ADVISOR', 'TECHNICIAN'
   try {
     const input = updateItemSchema.parse(req.body);
     const actorId = actor(res);
+    const user = res.locals.user as { id: string; role: string };
     const order = await prisma.$transaction(async tx => {
       const before = await tx.workOrder.findUniqueOrThrow({ where: { id: req.params.id } });
+      if (user.role === 'TECHNICIAN' && before.technicianId !== user.id) {
+        throw Object.assign(new Error('FORBIDDEN'), { status: 403 });
+      }
       if (before.status === 'COMPLETED' || before.status === 'DELIVERED') {
         throw Object.assign(new Error('ORDER_ITEMS_LOCKED'), { status: 409 });
       }
@@ -558,8 +594,12 @@ router.patch('/:id/items/:itemId/authorization', requireRoles('ADMIN', 'ADVISOR'
       .object({ authorizationStatus: z.enum(['APPROVED', 'REJECTED']) })
       .parse(req.body);
     const actorId = actor(res);
+    const user = res.locals.user as { id: string; role: string };
     const order = await prisma.$transaction(async tx => {
       const before = await tx.workOrder.findUniqueOrThrow({ where: { id: req.params.id } });
+      if (user.role === 'TECHNICIAN' && before.technicianId !== user.id) {
+        throw Object.assign(new Error('FORBIDDEN'), { status: 403 });
+      }
       if (before.status === 'COMPLETED' || before.status === 'DELIVERED') {
         throw Object.assign(new Error('ORDER_ITEMS_LOCKED'), { status: 409 });
       }

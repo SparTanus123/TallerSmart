@@ -4,17 +4,17 @@
    TallerSmart Design Tokens
    ════════════════════════════════════════════════════════════ */
 @theme {
-  --font-display: var(--font-display, 'Montserrat', system-ui, sans-serif);
-  --font-sans: var(--font-sans, 'Inter', system-ui, sans-serif);
-  --font-mono: var(--font-mono, 'DM Mono', 'Courier New', monospace);
+  --font-display: var(--font-open-sans), 'Open Sans', sans-serif;
+  --font-sans: var(--font-open-sans), 'Open Sans', sans-serif;
+  --font-mono: var(--font-open-sans), 'Open Sans', sans-serif;
 
   /* Surfaces */
-  --color-canvas: #f1f3f5;
-  --color-lane: #e8ecf0;
+  --color-canvas: #f8fafc;
+  --color-lane: #f1f5f9;
   --color-surface: #ffffff;
-  --color-surface-2: #f7f9fb;
-  --color-line: #dce2e8;
-  --color-line-strong: #c6cfd8;
+  --color-surface-2: #f8fafc;
+  --color-line: #e2e8f0;
+  --color-line-strong: #cbd5e1;
 
   /* Ink (dark UI) */
   --color-ink-700: #313942;
@@ -51,12 +51,12 @@
   --radius-lg: 12px;
   --radius-xl: 16px;
 
-  /* Elevation — slate-tinted, ring instead of border */
-  --shadow-e0: 0 0 0 1px rgba(23, 33, 43, 0.06);
-  --shadow-e1: 0 0 0 1px rgba(23, 33, 43, 0.06), 0 1px 3px rgba(23, 33, 43, 0.05), 0 6px 16px rgba(23, 33, 43, 0.05);
-  --shadow-e2: 0 0 0 1px rgba(23, 33, 43, 0.08), 0 6px 16px rgba(23, 33, 43, 0.1);
-  --shadow-e3: 0 0 0 1px rgba(23, 33, 43, 0.08), 0 12px 24px rgba(23, 33, 43, 0.14);
-  --shadow-e4: 0 24px 48px -12px rgba(23, 33, 43, 0.24), 0 0 0 1px rgba(23, 33, 43, 0.06);
+  /* Elevation — crisp clean white UI */
+  --shadow-e0: 0 0 0 1px rgba(15, 23, 42, 0.06);
+  --shadow-e1: 0 1px 3px 0 rgba(15, 23, 42, 0.04), 0 4px 14px -2px rgba(15, 23, 42, 0.04), 0 0 0 1px rgba(226, 232, 240, 0.85);
+  --shadow-e2: 0 4px 12px -2px rgba(15, 23, 42, 0.06), 0 10px 24px -4px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(203, 213, 225, 0.9);
+  --shadow-e3: 0 12px 28px -6px rgba(15, 23, 42, 0.09), 0 0 0 1px rgba(203, 213, 225, 0.9);
+  --shadow-e4: 0 24px 48px -12px rgba(15, 23, 42, 0.16), 0 0 0 1px rgba(203, 213, 225, 0.8);
 
   /* Motion */
   --ease-standard: cubic-bezier(0.2, 0, 0, 1);
@@ -114,6 +114,15 @@ body {
   -moz-osx-font-smoothing: grayscale;
   background: var(--color-canvas);
   color: var(--color-fg);
+}
+
+/* Open Sans is used for every text element, including labels and code-like UI. */
+*, *::before, *::after {
+  font-family: var(--font-open-sans), 'Open Sans', sans-serif;
+}
+
+svg text {
+  font-family: var(--font-open-sans), 'Open Sans', sans-serif;
 }
 
 /* Tipografía de impacto para títulos (Display / Sans Serif gruesa) */

@@ -1,4 +1,6 @@
 # Documentación Formal del Proyecto TallerSmart
+> 🎯 **Hito Académico:** **Avance 6 — Terminación, pruebas y validación (9 de noviembre)**  
+> 🟢 **Estado de los Entregables:** Documentación técnica, académica y empírica al 100% completada.
 
 En este directorio se encuentran los documentos técnicos, académicos y reportes de calidad que respaldan el diseño, arquitectura, aseguramiento de calidad y evaluación experimental de la plataforma **TallerSmart**.
 

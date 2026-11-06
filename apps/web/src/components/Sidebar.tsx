@@ -69,7 +69,12 @@ export default function Sidebar({
 }) {
   const pathname = usePathname();
   const { persona, orders, role, user, logout } = useGlobal();
-  const activeCount = orders.filter((o) => o.status !== 'delivered' && o.status !== 'completed').length;
+  const currentTechId = persona?.techId || user?.id;
+  const activeCount = (
+    role === 'technician'
+      ? orders.filter((o) => (currentTechId ? o.technicianId === currentTechId : false) && o.status !== 'delivered' && o.status !== 'completed')
+      : orders.filter((o) => o.status !== 'delivered' && o.status !== 'completed')
+  ).length;
 
   // State for user profile popover & logout confirmation
   const [menuOpen, setMenuOpen] = useState(false);
@@ -132,11 +137,12 @@ export default function Sidebar({
             <div className="flex flex-col gap-0.5">
               {group.items.filter(item => item.href !== '/users' || role === 'admin').map((item) => {
                 const active = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                const itemLabel = item.href === '/' && role === 'technician' ? 'Mi Bahía' : item.label;
                 return (
                   <Link
                     key={item.href}
                     href={item.href}
-                    title={collapsed ? item.label : undefined}
+                    title={collapsed ? itemLabel : undefined}
                     aria-current={active ? 'page' : undefined}
                     className={`group relative flex h-9 items-center gap-3 rounded-md text-[13.5px] transition-colors duration-150 ${
                       collapsed ? 'justify-center' : 'px-3'
@@ -148,7 +154,7 @@ export default function Sidebar({
                     ) : (
                       <Icon name={item.icon} size={20} duotone={active} />
                     )}
-                    {!collapsed && <span className={`flex-1 text-left ${active ? 'font-medium' : ''}`}>{item.label}</span>}
+                    {!collapsed && <span className={`flex-1 text-left ${active ? 'font-medium' : ''}`}>{itemLabel}</span>}
                     {!collapsed && item.href === '/work-orders' && (
                       <span className="font-mono text-[11px] text-fg-3 tnum">{activeCount}</span>
                     )}

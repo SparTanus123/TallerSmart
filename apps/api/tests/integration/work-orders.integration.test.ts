@@ -27,6 +27,17 @@ describe('Integration: Work Orders Lifecycle & Endpoints (/api/v1/work-orders)',
     workshopId: '00000000-0000-4000-8000-000000000000',
   };
 
+  const otherTechUser = {
+    id: '44444444-4444-4444-4444-444444444444',
+    name: 'Other Tech',
+    email: 'othertech@tallersmart.local',
+    role: 'TECHNICIAN' as const,
+    active: true,
+    workshopId: '00000000-0000-4000-8000-000000000000',
+  };
+
+  let otherTechToken: string;
+
   const sampleOrder: any = {
     id: '77777777-7777-7777-7777-777777777777',
     number: 'OT-2026-0042',
@@ -69,10 +80,16 @@ describe('Integration: Work Orders Lifecycle & Endpoints (/api/v1/work-orders)',
     (prisma.user.findUnique as any) = async (args: { where: { id?: string } }) => {
       if (args.where.id === adminUser.id) return adminUser;
       if (args.where.id === techUser.id) return techUser;
+      if (args.where.id === otherTechUser.id) return otherTechUser;
       return null;
     };
 
-    (prisma.workOrder.findMany as any) = async () => [sampleOrder];
+    (prisma.workOrder.findMany as any) = async (args?: any) => {
+      if (args?.where?.technicianId) {
+        return [sampleOrder].filter(o => o.technicianId === args.where.technicianId);
+      }
+      return [sampleOrder];
+    };
     (prisma.workOrder.findUnique as any) = async (args: { where: { id?: string } }) => {
       if (args.where.id === sampleOrder.id) return sampleOrder;
       return null;
@@ -102,6 +119,7 @@ describe('Integration: Work Orders Lifecycle & Endpoints (/api/v1/work-orders)',
     server = await createTestServer();
     adminToken = createSession(adminUser.id);
     techToken = createSession(techUser.id);
+    otherTechToken = createSession(otherTechUser.id);
   });
 
   after(async () => {
@@ -164,5 +182,47 @@ describe('Integration: Work Orders Lifecycle & Endpoints (/api/v1/work-orders)',
     assert.strictEqual(res.status, 404);
     const body = await res.json();
     assert.strictEqual(body.error, 'DOCUMENT_TYPE_NOT_FOUND');
+  });
+
+  it('GET /api/v1/work-orders for TECHNICIAN filters exclusively to their assigned orders ("solo al asignado")', async () => {
+    const resAssigned = await server.request('/api/v1/work-orders', { token: techToken });
+    assert.strictEqual(resAssigned.status, 200);
+    const assignedBody = await resAssigned.json();
+    assert.strictEqual(assignedBody.length, 1);
+    assert.strictEqual(assignedBody[0].technicianId, techUser.id);
+
+    const resUnassignedTech = await server.request('/api/v1/work-orders', { token: otherTechToken });
+    assert.strictEqual(resUnassignedTech.status, 200);
+    const unassignedBody = await resUnassignedTech.json();
+    assert.strictEqual(unassignedBody.length, 0);
+  });
+
+  it('GET /api/v1/work-orders/:id blocks TECHNICIAN with 403 if order is not assigned to them', async () => {
+    const res = await server.request(`/api/v1/work-orders/${sampleOrder.id}`, { token: otherTechToken });
+    assert.strictEqual(res.status, 403);
+    const body = await res.json();
+    assert.strictEqual(body.error, 'FORBIDDEN');
+  });
+
+  it('PATCH /api/v1/work-orders/:id/status blocks TECHNICIAN with 403 if order is not assigned to them', async () => {
+    const res = await server.request(`/api/v1/work-orders/${sampleOrder.id}/status`, {
+      method: 'PATCH',
+      token: otherTechToken,
+      body: JSON.stringify({ status: 'DIAGNOSING' }),
+    });
+    assert.strictEqual(res.status, 403);
+    const body = await res.json();
+    assert.strictEqual(body.error, 'FORBIDDEN');
+  });
+
+  it('PATCH /api/v1/work-orders/:id/record blocks TECHNICIAN with 403 if order is not assigned to them', async () => {
+    const res = await server.request(`/api/v1/work-orders/${sampleOrder.id}/record`, {
+      method: 'PATCH',
+      token: otherTechToken,
+      body: JSON.stringify({ diagnosis: 'Nuevo diagnóstico no autorizado', notes: 'Notas' }),
+    });
+    assert.strictEqual(res.status, 403);
+    const body = await res.json();
+    assert.strictEqual(body.error, 'FORBIDDEN');
   });
 });

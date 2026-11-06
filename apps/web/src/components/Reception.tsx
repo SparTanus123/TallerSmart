@@ -291,21 +291,32 @@ export default function Reception({
               </div>
             </div>
           )}
-          <label className="block text-xs font-medium text-fg-2">
-            Técnico asignado (opcional)
-            <select
-              className="field mt-1 h-10 w-full"
-              value={technicianId}
-              onChange={(e) => setTechnicianId(e.target.value)}
-            >
-              <option value="">Sin asignar (asignar más tarde)</option>
-              {technicians.map((t) => (
-                <option key={t.id} value={t.id}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="space-y-1">
+            <label className="block text-xs font-medium text-fg-2">
+              Técnico asignado (opcional)
+              <select
+                className="field mt-1 h-10 w-full"
+                value={technicianId}
+                onChange={(e) => setTechnicianId(e.target.value)}
+              >
+                <option value="">Sin asignar (asignar más tarde)</option>
+                {technicians.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p className="text-[11px] text-fg-3">
+              {technicianId ? (
+                <span className="text-emerald-700 font-medium">
+                  ✓ Esta recepción llegará directamente a la bahía de {technicians.find((t) => t.id === technicianId)?.name} (solo visible en su puesto de trabajo).
+                </span>
+              ) : (
+                "Al asignar un técnico, la nueva recepción llegará directamente a su bahía de trabajo y solo estará visible para él."
+              )}
+            </p>
+          </div>
           <label className="block text-xs font-medium text-fg-2">
             Kilometraje de entrada (km)
             <input

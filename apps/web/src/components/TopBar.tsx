@@ -23,6 +23,9 @@ export default function TopBar() {
     if (pathname.startsWith('/work-orders')) title = 'Órdenes de Trabajo';
     else title = 'TallerSmart';
   }
+  if (pathname === '/' && role === 'technician') {
+    title = 'Mi Bahía';
+  }
 
   return (
     <header className="flex h-[56px] shrink-0 items-center justify-between gap-2 bg-surface px-3 shadow-e0 sm:px-5">

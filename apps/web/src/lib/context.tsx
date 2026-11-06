@@ -371,7 +371,13 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     [orders, refreshOrders]
   )
 
-  const persona = user ? { name: user.name, label: PERSONAS[role].label } : PERSONAS[role]
+  const persona = user
+    ? {
+        name: user.name,
+        label: PERSONAS[role]?.label ?? (role === 'technician' ? 'Técnico de Bahía' : role),
+        techId: user.id,
+      }
+    : PERSONAS[role]
 
   return (
     <GlobalContext.Provider
