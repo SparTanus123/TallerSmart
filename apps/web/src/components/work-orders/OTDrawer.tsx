@@ -21,6 +21,7 @@ import { Icon } from "@/components/ui/Icon"
 import { api } from "@/lib/api-client"
 import { useGlobal } from "@/lib/context"
 import { SmartMecLogo } from "@/components/ai/SmartMecLogo"
+import { getVehicleTypeInfo } from "@/lib/vehicle-catalog"
 export default function OTDrawer({
   ot,
   onClose,
@@ -131,9 +132,13 @@ export default function OTDrawer({
               </h2>{" "}
               <StatusBadge status={ot.status} />{" "}
             </div>{" "}
-            <div className="text-[14px] text-fg-2">
-              {" "}
-              {ot.vehicle.make}{ot.vehicle.model ? ` ${ot.vehicle.model}` : ""} {ot.vehicle.year} ·{" "}
+            <div className="text-[14px] text-fg-2 flex items-center gap-1.5 flex-wrap">
+              <span title={getVehicleTypeInfo(ot.vehicle.type).label}>
+                {getVehicleTypeInfo(ot.vehicle.type).icon}
+              </span>
+              <span>
+                {ot.vehicle.make}{ot.vehicle.model ? ` ${ot.vehicle.model}` : ""} {ot.vehicle.year} ·{" "}
+              </span>
               <Plate value={ot.vehicle.plate} />{" "}
             </div>{" "}
           </div>{" "}

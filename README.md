@@ -63,11 +63,18 @@ c:\Proyecto de Ing 1\
 │           │   └── work-orders/  # Tablero Kanban, vista en lista y cajón lateral OTDrawer
 │           └── lib/              # api-client, contexto global (polling cada 4s) y formateadores
 │
+├── docs/                         # Documentación formal, memoria técnica y reportes de calidad
+│   ├── MEMORIA_TECNICA_PROYECTO.md # Documento formal completo del proyecto de ingeniería
+│   ├── TESTING_VALIDATION_REPORT.md# Informe consolidado de pruebas unitarias, integración y E2E
+│   └── SMARTMEC_AI_EVALUATION_REPORT.md # Evaluación formal del modelo de IA (Gemini)
 ├── tests/
 │   └── e2e/                      # Pruebas End-to-End con Microsoft Playwright (smoke.spec.ts)
 ├── tools/                        # Scripts de evaluación, orquestación y auditoría de seguridad
 └── docker-compose.yml            # Contenedor PostgreSQL 16 para desarrollo local
 ```
+
+> 📖 **Memoria Técnica y Documento Formal del Proyecto:**  
+> Consulta el documento académico completo con marco teórico, especificación formal de requisitos (ISO/IEC/IEEE 29148), arquitectura C4 y manuales en [docs/MEMORIA_TECNICA_PROYECTO.md](docs/MEMORIA_TECNICA_PROYECTO.md).
 
 ## 🚀 Guía de Puesta en Marcha (Comandos)
 
@@ -145,15 +152,33 @@ El backend integra el asistente técnico inteligente **SmartMec** potenciado por
    - **Endpoint REST:** `GET http://localhost:3001/api/v1/ai/status`
    - **Módulo Web:** Ingresar a la sección **SmartMec IA** (`/ai`) en el menú lateral o desplegar la pestaña **"IA"** dentro de cualquier orden de trabajo para generar borradores y diagnósticos en vivo.
 
+3. Ejecutar la batería formal de evaluación del modelo (20 casos automotrices, precisión, latencias y alucinaciones):
+   ```powershell
+   python tools/scripts/evaluate_smartmec.py
+   # Informe técnico formal disponible en docs/SMARTMEC_AI_EVALUATION_REPORT.md
+   ```
+
 ---
 
 ### 5. Pruebas Automatizadas y End-to-End (E2E)
 
 ```powershell
+# Ejecutar toda la suite de pruebas unitarias e integración (73 pruebas, 100% éxito)
+pnpm --filter @tallersmart/api test
+
+# Ejecutar únicamente pruebas unitarias (lógica, esquemas, PBKDF2, HMAC, PDF)
+pnpm --filter @tallersmart/api test:unit
+
+# Ejecutar únicamente pruebas de integración (HTTP, RBAC, Auth, OTs, IA)
+pnpm --filter @tallersmart/api test:integration
+
 # Verificar compilación y tipado completo del backend y frontend
 pnpm --filter @tallersmart/api build
 pnpm --filter web build
 
-# Ejecutar pruebas E2E con Playwright (con API y Web en ejecución)
+# Ejecutar pruebas funcionales y End-to-End con Playwright (con API y Web en ejecución)
 npx playwright test
 ```
+
+> 📄 **Informe Consolidado de Validación:**  
+> Consulta el documento detallado con la matriz de trazabilidad, requisitos funcionales y resultados en [docs/TESTING_VALIDATION_REPORT.md](docs/TESTING_VALIDATION_REPORT.md).

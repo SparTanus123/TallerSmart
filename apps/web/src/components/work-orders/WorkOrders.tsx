@@ -7,6 +7,7 @@ import { statusConfig } from '../../data/mockData';
 import { Avatar, Plate, SlaTimer, StatusBadge, UrgentBadge } from '@/components/ui/primitives';
 import { Icon } from '@/components/ui/Icon';
 import OTDrawer from '@/components/work-orders/OTDrawer';
+import { getVehicleTypeInfo } from '@/lib/vehicle-catalog';
 
 function KanbanCard({ ot, onClick }: { ot: WorkOrder; onClick: () => void }) {
   const pp = partsProgress(ot);
@@ -33,9 +34,14 @@ function KanbanCard({ ot, onClick }: { ot: WorkOrder; onClick: () => void }) {
       </div>
 
       <div>
-        <div className="text-[14px] font-semibold text-fg leading-tight mb-0.5">
-          {ot.vehicle.make}{ot.vehicle.model ? " " + ot.vehicle.model : ""}{" "}
-          <span className="font-normal text-fg-3">{ot.vehicle.year}</span>
+        <div className="text-[14px] font-semibold text-fg leading-tight mb-0.5 flex items-center gap-1.5">
+          <span title={getVehicleTypeInfo(ot.vehicle.type).label}>
+            {getVehicleTypeInfo(ot.vehicle.type).icon}
+          </span>
+          <span>
+            {ot.vehicle.make}{ot.vehicle.model ? " " + ot.vehicle.model : ""}{" "}
+            <span className="font-normal text-fg-3">{ot.vehicle.year}</span>
+          </span>
         </div>
         <div className="text-[12px] text-fg-2 truncate">{ot.client.name}</div>
       </div>
@@ -182,6 +188,9 @@ export default function WorkOrders({
                   <td className="px-5 py-3 font-mono font-medium text-fg-2">{shortOT(ot.number)}</td>
                   <td className="px-5 py-3 font-medium">{ot.client.name}</td>
                   <td className="px-5 py-3 text-fg-2">
+                    <span className="mr-1.5" title={getVehicleTypeInfo(ot.vehicle.type).label}>
+                      {getVehicleTypeInfo(ot.vehicle.type).icon}
+                    </span>
                     {ot.vehicle.make}{ot.vehicle.model ? " " + ot.vehicle.model : ""} · <Plate value={ot.vehicle.plate} />
                   </td>
                   <td className="px-5 py-3 text-fg-2">{ot.technicianName.split(' ')[0]}</td>

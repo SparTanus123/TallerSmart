@@ -42,20 +42,40 @@ api.use('/work-orders', workOrdersRouter);
 api.use('/ai', aiRouter);
 app.use('/api/v1', api);
 app.use((error: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  if (error instanceof ZodError) return res.status(400).json({ error: 'VALIDATION_ERROR', details: error.flatten() });
+  if (error instanceof ZodError) {
+    const firstError = error.errors[0];
+    const field = firstError?.path.join('.');
+    const msg = firstError ? `${field ? `${field}: ` : ''}${firstError.message}` : 'Error de validación';
+    return res.status(400).json({ error: 'VALIDATION_ERROR', message: msg, details: error.flatten() });
+  }
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
-    if (error.code === 'P2025') return res.status(404).json({ error: 'NOT_FOUND' });
-    if (error.code === 'P2002') return res.status(409).json({ error: 'DUPLICATE_VALUE', fields: error.meta?.target });
-    if (error.code === 'P2003') return res.status(409).json({ error: 'RELATED_RECORD_CONFLICT' });
+    if (error.code === 'P2025') return res.status(404).json({ error: 'NOT_FOUND', message: 'Registro no encontrado' });
+    if (error.code === 'P2002') {
+      const fields = error.meta?.target ? (Array.isArray(error.meta.target) ? error.meta.target.join(', ') : String(error.meta.target)) : '';
+      const msg = fields.includes('plate') ? 'Ya existe un vehículo registrado con esta placa' : `El registro ya existe con este valor único (${fields})`;
+      return res.status(409).json({ error: 'DUPLICATE_VALUE', message: msg, fields: error.meta?.target });
+    }
+    if (error.code === 'P2003') return res.status(409).json({ error: 'RELATED_RECORD_CONFLICT', message: 'No se puede completar la operación debido a registros relacionados' });
   }
   const status = typeof error === 'object' && error !== null && 'status' in error && typeof error.status === 'number' ? error.status : 500;
   const message = status >= 500 && process.env.NODE_ENV === 'production' ? 'INTERNAL_SERVER_ERROR' : (error instanceof Error ? error.message : 'INTERNAL_ERROR');
   if (status >= 500) console.error(error);
-  res.status(status).json({ error: message });
+  res.status(status).json({ error: message, message });
 });
 
 const port = Number(process.env.PORT ?? 3001);
-const server = app.listen(port, () => console.log(`TallerSmart API listening on :${port}`));
-const shutdown = async () => { server.close(); await prisma.$disconnect(); process.exit(0); };
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+export { app };
+export default app;
+
+const isTest =
+  process.env.NODE_ENV === 'test' ||
+  process.argv.includes('--test') ||
+  process.execArgv.includes('--test') ||
+  Boolean(process.env.NODE_TEST_CONTEXT);
+
+if (!isTest) {
+  const server = app.listen(port, () => console.log(`TallerSmart API listening on :${port}`));
+  const shutdown = async () => { server.close(); await prisma.$disconnect(); process.exit(0); };
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+}

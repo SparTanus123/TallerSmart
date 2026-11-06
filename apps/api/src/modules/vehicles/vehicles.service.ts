@@ -1,4 +1,5 @@
 import { prisma } from '../../lib/prisma';
+import type { VehicleType } from '@prisma/client';
 
 export function listVehicles(search = '', clientId?: string) {
   const q = search.trim();
@@ -22,6 +23,7 @@ export function listVehicles(search = '', clientId?: string) {
 
 export async function createVehicle(data: {
   currentClientId: string;
+  type?: VehicleType;
   plate: string;
   vin?: string;
   make: string;
@@ -31,11 +33,12 @@ export async function createVehicle(data: {
   color?: string;
 }) {
   if (!(await prisma.client.findFirst({ where: { id: data.currentClientId } }))) {
-    throw Object.assign(new Error('CLIENT_NOT_FOUND'), { status: 404 });
+    throw Object.assign(new Error('El cliente seleccionado no existe o no pertenece a este taller'), { status: 404 });
   }
   return prisma.vehicle.create({
     data: {
       ...data,
+      type: data.type ?? 'CAR',
       model: data.model ?? '',
       vin: data.vin || null,
       color: data.color || null,

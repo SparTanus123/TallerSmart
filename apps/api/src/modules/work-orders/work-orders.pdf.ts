@@ -28,7 +28,7 @@ function createDocument(title: string, order: Order) {
   const field = (label: string, value?: string | number | null) => { if (value !== undefined && value !== null && value !== '') doc.font('Helvetica-Bold').fillColor('#334155').text(`${label}: `, { continued: true }).font('Helvetica').text(String(value)); };
   field('Cliente', order.client.name); field('Teléfono', order.client.phone); field('Correo', order.client.email);
   field('Vehículo', `${order.vehicle.make} ${order.vehicle.model} ${order.vehicle.year}`); field('Placa', order.vehicle.plate); field('VIN', order.vehicle.vin);
-  field('Kilometraje de ingreso', `${order.mileageIn.toLocaleString('es-CO')} km`); field('Kilometraje de salida', order.mileageOut === null ? null : `${order.mileageOut.toLocaleString('es-CO')} km`);
+  field('Kilometraje de ingreso', `${order.mileageIn.toLocaleString('es-CO')} km`); field('Kilometraje de salida', order.mileageOut == null ? null : `${order.mileageOut.toLocaleString('es-CO')} km`);
   doc.moveDown(0.8);
   return { doc, done, field };
 }

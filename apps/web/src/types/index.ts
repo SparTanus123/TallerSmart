@@ -19,11 +19,14 @@ export interface Client {
   type: "personal" | "empresa"
 }
 
+export type VehicleType = "CAR" | "MOTORCYCLE" | "ATV" | "OTHER"
+
 export interface Vehicle {
   id: string
   clientId: string
   plate: string
   vin: string
+  type?: VehicleType
   make: string
   model?: string
   year: number

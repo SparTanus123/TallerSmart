@@ -174,24 +174,24 @@ export default function Sidebar({
             ref={popoverRef}
             className={`absolute z-50 rounded-xl border border-line bg-surface p-4 text-fg shadow-e4 animate-pop-in ${
               collapsed
-                ? 'bottom-2 left-[78px] w-[270px]'
-                : 'bottom-[64px] left-3 right-3'
+                ? 'bottom-2 left-[78px] w-[285px]'
+                : 'bottom-[64px] left-2 w-[285px]'
             }`}
             style={{
               boxShadow: '0 12px 30px -4px rgba(23, 33, 43, 0.16), 0 0 0 1px rgba(23, 33, 43, 0.06)',
             }}
           >
-            {/* Header matching Image 2 */}
+            {/* Header */}
             <div className="flex items-start justify-between gap-3 border-b border-line pb-3">
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[14px] font-bold text-fg">
+                <div className="text-[14px] font-bold text-fg leading-tight">
                   {userName}
                 </div>
-                <div className="truncate text-[12px] text-fg-3 mt-0.5 font-sans">
+                <div className="text-[12px] text-fg-3 mt-1 font-sans break-all">
                   {userEmail}
                 </div>
-                <div className="mt-1.5 flex items-center gap-1.5">
-                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500" />
+                <div className="mt-2 flex items-center gap-1.5">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
                   <span className="font-mono text-[10.5px] font-semibold uppercase text-fg-2">
                     {persona.label}
                   </span>
@@ -203,7 +203,7 @@ export default function Sidebar({
                   setMenuOpen(false);
                   setConfirmingLogout(false);
                 }}
-                className="flex h-6 w-6 items-center justify-center rounded-md text-fg-3 hover:bg-canvas hover:text-fg transition-colors"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-fg-3 hover:bg-surface-2 hover:text-fg transition-colors shrink-0"
                 title="Cerrar ventana"
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -216,16 +216,16 @@ export default function Sidebar({
             {/* Logout Choice Section */}
             <div className="pt-3">
               {!confirmingLogout ? (
-                <div className="space-y-2.5">
-                  <div className="text-[12px] text-fg-2">
+                <div className="space-y-3">
+                  <div className="text-[12.5px] text-fg-2 leading-relaxed">
                     ¿Deseas cerrar tu sesión en TallerSmart?
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => setConfirmingLogout(true)}
-                      className="btn btn-secondary btn-sm flex-1 text-danger hover:border-danger hover:bg-danger-50 transition-colors"
+                      className="btn btn-secondary btn-sm flex-1 whitespace-nowrap text-danger hover:border-danger hover:bg-danger-50 transition-colors justify-center font-medium"
                     >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
                         <polyline points="16 17 21 12 16 7" />
                         <line x1="21" y1="12" x2="9" y2="12" />
@@ -234,27 +234,27 @@ export default function Sidebar({
                     </button>
                     <button
                       onClick={() => setMenuOpen(false)}
-                      className="btn btn-ghost btn-sm text-[12px]"
+                      className="btn btn-ghost btn-sm text-[12px] whitespace-nowrap px-3 text-fg-2 hover:bg-surface-2 shrink-0 font-medium"
                     >
                       Permanecer
                     </button>
                   </div>
                 </div>
               ) : (
-                <div className="space-y-2.5 animate-fade-in">
-                  <div className="text-[12px] font-semibold text-fg text-center">
+                <div className="space-y-3 animate-fade-in">
+                  <div className="text-[12.5px] font-semibold text-fg text-center">
                     ¿Confirmas que deseas salir?
                   </div>
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => setConfirmingLogout(false)}
-                      className="btn btn-secondary btn-sm text-[12px]"
+                      className="btn btn-secondary btn-sm text-[12px] justify-center"
                     >
                       Cancelar
                     </button>
                     <button
                       onClick={() => void logout()}
-                      className="btn btn-sm bg-danger text-white hover:bg-red-700 font-semibold"
+                      className="btn btn-sm bg-danger text-white hover:bg-red-700 font-semibold justify-center"
                     >
                       Sí, salir
                     </button>

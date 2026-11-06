@@ -1,9 +1,11 @@
 "use client"
 import { useEffect, useMemo, useState } from "react"
-import type { Client, IntakeInspection, Vehicle } from "@/types"
+import type { Client, IntakeInspection, Vehicle, VehicleType } from "@/types"
 import { Drawer, Plate } from "@/components/ui/primitives"
 import { Icon } from "@/components/ui/Icon"
 import { useGlobal } from "@/lib/context"
+import { VehicleFormFields } from "@/components/vehicles/VehicleFormFields"
+import { getVehicleTypeInfo } from "@/lib/vehicle-catalog"
 
 const belongingsList = ["Documentos", "Herramientas", "Silla infantil", "Objetos personales"]
 const damageList = ["Frontal", "Trasera", "Lateral izquierdo", "Lateral derecho", "Techo", "Parabrisas"]
@@ -142,7 +144,7 @@ export default function Reception({
           </div>
           {quickClient && (
             <form
-              className="grid gap-2 rounded-lg border border-line bg-surface-2 p-3 sm:grid-cols-2"
+              className="grid gap-2 rounded-lg border border-line bg-surface-2 p-3 sm:grid-cols-2 animate-fade-in"
               onSubmit={async (e) => {
                 e.preventDefault()
                 const f = new FormData(e.currentTarget)
@@ -150,14 +152,16 @@ export default function Reception({
                 setError("")
                 const name = String(f.get("name"))
                 try {
-                  await createClient({
+                  const created = await createClient({
                     name,
                     phone: String(f.get("phone")),
                     email: String(f.get("email") ?? ""),
                     type: String(f.get("type")) as "PERSONAL" | "COMPANY",
                   })
                   setNewClientName(name)
+                  setClientId(created.id)
                   await refreshDirectory()
+                  setQuickClient(false)
                 } catch (x) {
                   setError(x instanceof Error ? x.message : "No se pudo guardar cliente")
                 } finally {
@@ -179,22 +183,30 @@ export default function Reception({
           )}
           {quickVehicle && (
             <form
-              className="grid gap-2 rounded-lg border border-line bg-surface-2 p-3 sm:grid-cols-2"
+              className="grid gap-3 rounded-lg border border-primary/30 bg-surface-2 p-4 animate-fade-in"
               onSubmit={async (e) => {
                 e.preventDefault()
+                if (!clientId) {
+                  setError("Selecciona primero un cliente de la lista para registrarle el vehículo.")
+                  return
+                }
                 const f = new FormData(e.currentTarget)
                 setBusyQuick(true)
                 setError("")
                 try {
-                  await createVehicle({
+                  const created = await createVehicle({
                     currentClientId: clientId,
+                    type: (String(f.get("type")) || "CAR") as VehicleType,
                     plate: String(f.get("plate")),
                     make: String(f.get("make")),
+                    model: String(f.get("model") ?? ""),
                     year: Number(f.get("year")),
                     mileage: Number(f.get("mileage")),
+                    vin: String(f.get("vin") ?? ""),
                     color: String(f.get("color") ?? ""),
                   })
                   await refreshDirectory()
+                  setVehicleId(created.id)
                   setQuickVehicle(false)
                 } catch (x) {
                   setError(x instanceof Error ? x.message : "No se pudo guardar vehículo")
@@ -203,13 +215,31 @@ export default function Reception({
                 }
               }}
             >
-              <input className="field h-9" name="plate" placeholder="Placa colombiana (ej: ABC123)" minLength={5} required />
-              <input className="field h-9" name="make" placeholder="Marca" required />
-              <input className="field h-9" name="year" type="number" min="1900" max="2100" placeholder="Año" required />
-              <input className="field h-9" name="mileage" type="number" min="0" placeholder="Kilometraje" required />
-              <input className="field h-9" name="color" placeholder="Color" />
-              <button className="btn btn-primary btn-sm sm:col-span-2" disabled={busyQuick}>
-                {busyQuick ? "Guardando…" : "Guardar vehículo"}
+              <div className="flex items-center justify-between border-b border-line pb-1">
+                <span className="text-xs font-semibold uppercase text-fg-2">
+                  {clientId
+                    ? `Registrar vehículo para: ${clients.find((c) => c.id === clientId)?.name ?? "Cliente seleccionado"}`
+                    : "⚠️ Primero selecciona un cliente arriba"}
+                </span>
+                <button
+                  type="button"
+                  className="text-xs text-fg-3 hover:text-fg font-medium"
+                  onClick={() => setQuickVehicle(false)}
+                >
+                  Cancelar
+                </button>
+              </div>
+
+              {!clientId && (
+                <p className="text-xs text-amber-700 bg-amber-50 p-2 rounded border border-amber-200">
+                  Selecciona primero un cliente en el campo de abajo para poder asociarle este vehículo.
+                </p>
+              )}
+
+              <VehicleFormFields compact />
+
+              <button className="btn btn-primary btn-sm" disabled={busyQuick || !clientId}>
+                {busyQuick ? "Guardando…" : "Guardar vehículo y seleccionar"}
               </button>
             </form>
           )}
@@ -235,17 +265,25 @@ export default function Reception({
             Vehículo
             <select className="field mt-1 h-10 w-full" value={vehicle?.id ?? ""} onChange={(e) => setVehicleId(e.target.value)}>
               <option value="">Selecciona vehículo</option>
-              {clientVehicles.map((v) => (
-                <option key={v.id} value={v.id}>
-                  {v.plate} · {v.make}
-                  {v.model ? ` ${v.model}` : ""} · {clients.find((c) => c.id === v.clientId)?.name}
-                </option>
-              ))}
+              {clientVehicles.map((v) => {
+                const info = getVehicleTypeInfo(v.type)
+                return (
+                  <option key={v.id} value={v.id}>
+                    {info.icon} {v.plate} · {v.make}
+                    {v.model ? ` ${v.model}` : ""} · {clients.find((c) => c.id === v.clientId)?.name}
+                  </option>
+                )
+              })}
             </select>
           </label>
           {vehicle && client && (
             <div className="flex items-center gap-4">
-              <Plate value={vehicle.plate} size="lg" />
+              <div className="flex items-center gap-2">
+                <span className="text-3xl" title={getVehicleTypeInfo(vehicle.type).label}>
+                  {getVehicleTypeInfo(vehicle.type).icon}
+                </span>
+                <Plate value={vehicle.plate} size="lg" />
+              </div>
               <div className="font-semibold">
                 {vehicle.make}
                 {vehicle.model ? ` ${vehicle.model}` : ""} {vehicle.year}

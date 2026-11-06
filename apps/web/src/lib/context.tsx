@@ -2,7 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
-import type { Client, IntakeInspection, UserRole, Vehicle, WorkOrder } from "@/types"
+import type { Client, IntakeInspection, UserRole, Vehicle, VehicleType, WorkOrder } from "@/types"
 import { PERSONAS } from "@/lib/constants"
 import { api } from "@/lib/api-client"
 
@@ -26,8 +26,8 @@ interface GlobalState {
   refreshDirectory: () => Promise<void>
   refreshTechnicians: () => Promise<void>
   assignTechnician: (workOrderId: string, technicianId: string | null) => Promise<void>
-  createClient: (input: { name: string; phone: string; email?: string; type: "PERSONAL" | "COMPANY" }) => Promise<void>
-  createVehicle: (input: { currentClientId: string; plate: string; make: string; model?: string; year: number; mileage: number; vin?: string; color?: string }) => Promise<void>
+  createClient: (input: { name: string; phone: string; email?: string; type: "PERSONAL" | "COMPANY" }) => Promise<{ id: string; name: string }>
+  createVehicle: (input: { currentClientId: string; plate: string; type?: VehicleType; make: string; model?: string; year: number; mileage: number; vin?: string; color?: string }) => Promise<Vehicle>
   createOrder: (input: { vehicleId: string; technicianId?: string | null; complaint: string; mileageIn: number; estimatedDelivery: string; intakeInspection: IntakeInspection; photos: File[] }) => Promise<void>
   uploadIntakePhotos: (workOrderId: string, photos: File[]) => Promise<void>
   updateOrder: (order: WorkOrder) => Promise<void>
@@ -41,7 +41,7 @@ interface GlobalState {
 const GlobalContext = createContext<GlobalState | null>(null)
 const lower = (value: unknown) => String(value ?? "").toLowerCase()
 type ApiClient = { id: string; name: string; phone: string; email: string | null; type: string; createdAt: string }
-type ApiVehicle = { id: string; currentClientId: string; plate: string; vin: string | null; make: string; model: string; year: number; mileage: number; color: string | null }
+type ApiVehicle = { id: string; currentClientId: string; plate: string; vin: string | null; type?: VehicleType; make: string; model: string; year: number; mileage: number; color: string | null }
 type ApiEvent = { id: string; action: string; createdAt: string; fromValue: unknown; toValue: unknown; actor: { name: string } | null }
 type ApiItem = { id: string; type: string; nameSnapshot: string; quantity: string | number; unitPrice: string | number; authorizationStatus: "PENDING" | "APPROVED" | "REJECTED" }
 type ApiWorkOrder = { id: string; number: string; status: string; urgency: string; client: ApiClient; vehicle: ApiVehicle; technicianId: string | null; technician: { name: string } | null; complaint: string; diagnosis: string | null; notes: string | null; items: ApiItem[]; total: string | number; createdAt: string; updatedAt: string; estimatedDelivery: string | null; mileageIn: number; mileageOut: number | null; intakeInspection: IntakeInspection | null; intakePhotos?: { id: string; fileName: string; mimeType: string; createdAt: string }[]; events: ApiEvent[]; deliveryReportDraft: string | null; approvedReportSnapshot: string | null; reportApprovedAt: string | null; reportApprovedBy: { name: string } | null }
@@ -71,6 +71,7 @@ function toOrder(row: ApiWorkOrder): WorkOrder {
       clientId: vehicleRow.currentClientId,
       plate: vehicleRow.plate,
       vin: vehicleRow.vin ?? "",
+      type: (vehicleRow.type ?? "CAR") as VehicleType,
       make: vehicleRow.make,
       model: vehicleRow.model ?? "",
       year: vehicleRow.year,
@@ -137,6 +138,7 @@ function toVehicle(row: ApiVehicle): Vehicle {
     clientId: row.currentClientId,
     plate: row.plate,
     vin: row.vin ?? "",
+    type: (row.type ?? "CAR") as VehicleType,
     make: row.make,
     model: row.model ?? "",
     year: row.year,
@@ -311,8 +313,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
 
   const createClient = useCallback(
     async (input: { name: string; phone: string; email?: string; type: "PERSONAL" | "COMPANY" }) => {
-      await api.createClient(input)
+      const res = await api.createClient(input)
       await loadDirectory()
+      return { id: String(res.id), name: String(res.name) }
     },
     [loadDirectory]
   )
@@ -321,6 +324,7 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
     async (input: {
       currentClientId: string
       plate: string
+      type?: VehicleType
       make: string
       model?: string
       year: number
@@ -328,8 +332,9 @@ export function GlobalProvider({ children }: { children: React.ReactNode }) {
       vin?: string
       color?: string
     }) => {
-      await api.createVehicle(input)
+      const created = await api.createVehicle(input)
       await loadDirectory()
+      return toVehicle(created as unknown as ApiVehicle)
     },
     [loadDirectory]
   )

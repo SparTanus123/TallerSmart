@@ -10,7 +10,12 @@
     "db:up": "docker compose up -d --wait db",
     "build": "pnpm -F web build",
     "start": "pnpm -F web start",
-    "lint": "pnpm -F web lint"
+    "lint": "pnpm -F web lint",
+    "test": "pnpm --filter @tallersmart/api test",
+    "test:unit": "pnpm --filter @tallersmart/api test:unit",
+    "test:integration": "pnpm --filter @tallersmart/api test:integration",
+    "test:e2e": "playwright test",
+    "test:all": "pnpm test && pnpm test:e2e"
   },
   "devDependencies": {
     "@playwright/test": "^1.64.1",

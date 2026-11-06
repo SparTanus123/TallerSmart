@@ -18,6 +18,13 @@ enum ClientType {
   COMPANY
 }
 
+enum VehicleType {
+  CAR
+  MOTORCYCLE
+  ATV
+  OTHER
+}
+
 enum CatalogItemType {
   SERVICE
   PART
@@ -85,6 +92,7 @@ model Vehicle {
   currentClientId String      @map("current_client_id") @db.Uuid
   plate           String      @unique
   vin             String?     @unique
+  type            VehicleType @default(CAR)
   make            String
   model           String
   year            Int
