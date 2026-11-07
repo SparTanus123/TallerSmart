@@ -1,9 +1,5 @@
 # TallerSmart - Plataforma de Gestión, Trazabilidad Operativa y Diagnóstico Asistido por IA
 
-> 🎯 **Hito Académico:** **Avance 6 — Terminación, pruebas y validación (9 de noviembre)**  
-> 🟢 **Estado de Cumplimiento:** **100% SATISFECHO**  
-> 🏷️ **Versión del Sistema:** `v1.0.0` (Release Candidate / Producción) | **Calidad Global:** `98.5%`
-
 Plataforma integral de grado de ingeniería diseñada para la digitalización, control operativo y diagnóstico vehicular en talleres automotrices multimarca. Compuesta por una **API Centralizada RESTful** (Node.js, Express, TypeScript, Prisma ORM y PostgreSQL), un **Tablero Web Operativo** (Next.js 15 App Router, React 19 y Tailwind CSS) y un **Copiloto Automotriz Inteligente** (**SmartMec**, potenciado por la API de Google Gemini).
 
 ---
