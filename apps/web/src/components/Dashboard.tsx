@@ -542,7 +542,7 @@ export default function Dashboard({
 
   // ── ADMIN / ADVISOR DASHBOARD ──────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-[1400px] p-4 sm:p-6 lg:p-8 space-y-6">
+    <div className="mx-auto flex max-w-[1400px] flex-col gap-6 p-4 sm:p-6 lg:p-8">
       {/* ── TOP HEADER: CLEAN WHITE GREETING & CONTROLS ── */}
       <motion.div
         initial={{ opacity: 0, y: -8 }}
@@ -596,7 +596,7 @@ export default function Dashboard({
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-white via-white to-violet-50/40 p-4 sm:p-5 border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_4px_16px_-2px_rgba(0,0,0,0.03)]"
+        className="order-first relative overflow-hidden rounded-2xl bg-gradient-to-r from-white via-white to-violet-50/40 p-4 sm:p-5 border border-slate-200/80 shadow-[0_1px_3px_rgba(0,0,0,0.03),0_4px_16px_-2px_rgba(0,0,0,0.03)]"
       >
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-3.5">
