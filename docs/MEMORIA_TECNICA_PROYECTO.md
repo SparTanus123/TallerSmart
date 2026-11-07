@@ -387,12 +387,12 @@ El flujo de una orden de trabajo está gobernado por una máquina de estados fin
 ```
 
 #### Reglas de Guardia y Transiciones Válidas:
-- `RECEIVED` ➔ `['DIAGNOSING']`
-- `DIAGNOSING` ➔ `['IN_PROGRESS', 'WAITING_PARTS']`
-- `IN_PROGRESS` ➔ `['WAITING_PARTS', 'COMPLETED']`
-- `WAITING_PARTS` ➔ `['IN_PROGRESS']`
-- `COMPLETED` ➔ `['DELIVERED']`
-- `DELIVERED` ➔ No permite transiciones salientes (estado final congelado).
+- `RECEIVED` → `['DIAGNOSING']`
+- `DIAGNOSING` → `['IN_PROGRESS', 'WAITING_PARTS']`
+- `IN_PROGRESS` → `['WAITING_PARTS', 'COMPLETED']`
+- `WAITING_PARTS` → `['IN_PROGRESS']`
+- `COMPLETED` → `['DELIVERED']`
+- `DELIVERED` → No permite transiciones salientes (estado final congelado).
 - **Invariante de Finalización:** Pasar a `COMPLETED` exige `diagnosis.trim() !== ''` y cero ítems en estado `PENDING`. Si alguna condición no se cumple, la API arroja HTTP 409 (`DIAGNOSIS_REQUIRED` o `PENDING_WORK_REQUIRES_CLIENT_APPROVAL`).
 
 ### 4.5. Arquitectura del Cliente Web (Next.js 15 App Router)

@@ -4,20 +4,20 @@ Plataforma integral de grado de ingeniería diseñada para la digitalización, c
 
 ---
 
-## 📋 Resumen de Cumplimiento:
+## Resumen de Cumplimiento:
 
 El proyecto satisface a cabalidad los cuatro componentes requeridos para la entrega de **Terminación, pruebas y validación**:
 
 | Componente Exigido | Estado | Evidencias y Documentación Técnica |
 | :--- | :---: | :--- |
-| **1. Producto prácticamente terminado** | 🟢 **100%** | • Backend REST API (`apps/api`) completo con autenticación criptográfica PBKDF2/HMAC y RBAC.<br>• Base de datos PostgreSQL con migraciones y transacciones ACID.<br>• Frontend Web (`apps/web`) en Next.js 15 con compilación limpia (`next build`) y diseño responsivo.<br>• Flujo operativo íntegro: Recepción con inventario de daños ➔ Asignación de bahía ➔ Diagnóstico ➔ Presupuesto y repuestos ➔ Control de calidad ➔ Entrega y emisión de 4 tipos de documentos PDF binarios. |
-| **2. Resultados de pruebas** | 🟢 **100%** | • **73 de 73 pruebas automatizadas de backend aprobadas (100% éxito)**: 36 unitarias y 37 de integración.<br>• Suite de 9 pruebas funcionales y End-to-End con Playwright (`tests/e2e`).<br>• Cumplimiento estricto de estándares: **OWASP ASVS v4.0.3 (100%)**, **OWASP WSTG v4.2 (100%)**, **Semgrep SAST (0 alertas)**, **Gitleaks (0 secretos)** y **OpenSSF Scorecard (10.0 / 10)**.<br>• 📄 Documento consolidado: [`docs/TESTING_VALIDATION_REPORT.md`](docs/TESTING_VALIDATION_REPORT.md). |
-| **3. Evaluación del componente inteligente** | 🟢 **100%** | • Benchmark formal del copiloto **SmartMec** (`gemini-3.5-flash-lite` con cascade fallback) contra un dataset de **20 casos empíricos automotrices reales**.<br>• **100.0% acierto en detección de subsistemas mecánicos**, correlación de códigos OBD-II (SAE J1979), **0% alucinaciones**, rechazo de ataques adversarios y latencia mediana P50 de 2.0 s.<br>• 📄 Informe formal: [`docs/SMARTMEC_AI_EVALUATION_REPORT.md`](docs/SMARTMEC_AI_EVALUATION_REPORT.md). |
-| **4. Borrador completo del documento del proyecto** | 🟢 **100%** | • Memoria técnica formal y académica de 562 líneas estructurada según estándares IEEE e ISO/IEC 25010.<br>• Capítulos desarrollados en su totalidad: Introducción, Marco Teórico, Requisitos (RF/RNF), Arquitectura C4 y FSM, Implementación Técnica, Aseguramiento de Calidad y Conclusiones.<br>• 📄 Documento completo: [`docs/MEMORIA_TECNICA_PROYECTO.md`](docs/MEMORIA_TECNICA_PROYECTO.md). |
+| **1. Producto prácticamente terminado** | **100% (Aprobado)** | • Backend REST API (`apps/api`) completo con autenticación criptográfica PBKDF2/HMAC y RBAC.<br>• Base de datos PostgreSQL con migraciones y transacciones ACID.<br>• Frontend Web (`apps/web`) en Next.js 15 con compilación limpia (`next build`) y diseño responsivo.<br>• Flujo operativo íntegro: Recepción con inventario de daños → Asignación de bahía → Diagnóstico → Presupuesto y repuestos → Control de calidad → Entrega y emisión de 4 tipos de documentos PDF binarios. |
+| **2. Resultados de pruebas** | **100% (Aprobado)** | • **73 de 73 pruebas automatizadas de backend aprobadas (100% éxito)**: 36 unitarias y 37 de integración.<br>• Suite de 9 pruebas funcionales y End-to-End con Playwright (`tests/e2e`).<br>• Cumplimiento estricto de estándares: **OWASP ASVS v4.0.3 (100%)**, **OWASP WSTG v4.2 (100%)**, **Semgrep SAST (0 alertas)**, **Gitleaks (0 secretos)** y **OpenSSF Scorecard (10.0 / 10)**.<br>• Documento consolidado: [`docs/TESTING_VALIDATION_REPORT.md`](docs/TESTING_VALIDATION_REPORT.md). |
+| **3. Evaluación del componente inteligente** | **100% (Aprobado)** | • Benchmark formal del copiloto **SmartMec** (`gemini-3.5-flash-lite` con cascade fallback) contra un dataset de **20 casos empíricos automotrices reales**.<br>• **100.0% acierto en detección de subsistemas mecánicos**, correlación de códigos OBD-II (SAE J1979), **0% alucinaciones**, rechazo de ataques adversarios y latencia mediana P50 de 2.0 s.<br>• Informe formal: [`docs/SMARTMEC_AI_EVALUATION_REPORT.md`](docs/SMARTMEC_AI_EVALUATION_REPORT.md). |
+| **4. Borrador completo del documento del proyecto** | **100% (Aprobado)** | • Memoria técnica formal y académica de 562 líneas estructurada según estándares IEEE e ISO/IEC 25010.<br>• Capítulos desarrollados en su totalidad: Introducción, Marco Teórico, Requisitos (RF/RNF), Arquitectura C4 y FSM, Implementación Técnica, Aseguramiento de Calidad y Conclusiones.<br>• Documento completo: [`docs/MEMORIA_TECNICA_PROYECTO.md`](docs/MEMORIA_TECNICA_PROYECTO.md). |
 
 ---
 
-## 🏛️ Arquitectura y Principios Rectores
+## Arquitectura y Principios Rectores
 
 ### 1. Registro Único y No Redundancia de Datos (RNF-07)
 La información ingresada en la recepción del vehículo por el asesor fluye automáticamente por todas las etapas operativas sin re-digitación:
@@ -46,7 +46,7 @@ Toda modificación de estado, variación de kilometraje o cambio en la cotizaci�
 
 ---
 
-## 📂 Estructura del Repositorio
+## Estructura del Repositorio
 
 ```text
 c:\Proyecto de Ing 1\
@@ -98,7 +98,7 @@ c:\Proyecto de Ing 1\
 
 ---
 
-## 🚀 Guía de Puesta en Marcha (Comandos)
+## Guía de Puesta en Marcha (Comandos)
 
 ### 1. Prerrequisitos
 * **Node.js** >= 18 (o LTS actual)
@@ -156,7 +156,7 @@ pnpm --filter web dev
 # -> Disponible en http://localhost:3000
 ```
 
-> 💡 **Inicio Rápido (Full Stack en un solo paso):**  
+> **Inicio Rápido (Full Stack en un solo paso):**  
 > Ejecutando `pnpm dev` desde la raíz se levanta el contenedor PostgreSQL, la API Express y el frontend Next.js de forma simultánea y paralela.
 
 ---
@@ -181,7 +181,7 @@ El backend incorpora al asistente especializado **SmartMec** para triaje técnic
 
 ---
 
-## 🧪 Ejecución de Pruebas y Validación
+## Ejecución de Pruebas y Validación
 
 ```powershell
 # 1. Ejecutar toda la batería de 73 pruebas backend (unitarias e integración)
@@ -203,9 +203,9 @@ pnpm test:e2e
 
 ---
 
-## 📚 Documentación Técnica y Académica
+## Documentación Técnica y Académica
 
-* 📖 **[Memoria Técnica Formal del Proyecto](docs/MEMORIA_TECNICA_PROYECTO.md):** Documento formal académico para Proyecto de Ingeniería I (562 líneas con marco teórico, requisitos RF/RNF, C4, FSM, seguridad y conclusiones).
-* 🧪 **[Informe Consolidado de Pruebas y QA](docs/TESTING_VALIDATION_REPORT.md):** Detalle de las 73 pruebas backend, 9 pruebas E2E, matrices de trazabilidad y cobertura de requisitos.
-* 🤖 **[Evaluación Formal del Componente de IA](docs/SMARTMEC_AI_EVALUATION_REPORT.md):** Metodología experimental, matriz de 20 casos de prueba automotrices, métricas de precisión, latencia y análisis de alucinaciones.
-* 🛡️ **[Reporte de Completitud y Seguridad](.agents/reports/project-completeness.md):** Resumen de escaneos OWASP ASVS, WSTG, Semgrep, Gitleaks, ORT y OpenSSF Scorecard.
+* **[Memoria Técnica Formal del Proyecto](docs/MEMORIA_TECNICA_PROYECTO.md):** Documento formal académico para Proyecto de Ingeniería I (562 líneas con marco teórico, requisitos RF/RNF, C4, FSM, seguridad y conclusiones).
+* **[Informe Consolidado de Pruebas y QA](docs/TESTING_VALIDATION_REPORT.md):** Detalle de las 73 pruebas backend, 9 pruebas E2E, matrices de trazabilidad y cobertura de requisitos.
+* **[Evaluación Formal del Componente de IA](docs/SMARTMEC_AI_EVALUATION_REPORT.md):** Metodología experimental, matriz de 20 casos de prueba automotrices, métricas de precisión, latencia y análisis de alucinaciones.
+* **[Reporte de Completitud y Seguridad](.agents/reports/project-completeness.md):** Resumen de escaneos OWASP ASVS, WSTG, Semgrep, Gitleaks, ORT y OpenSSF Scorecard.

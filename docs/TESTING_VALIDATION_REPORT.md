@@ -4,7 +4,7 @@
 **Fecha de Ejecución:** 2026-11-06  
 **Ambiente:** Node.js v25.9.0 / Windows x64  
 **Frameworks de Pruebas:** `node:test` + `tsx` (Unitarias e Integración) | `@playwright/test` v1.64.1 (E2E / Funcional)  
-**Estado General de la Suite:** 🟢 **CUMPLE AL 100% (73/73 Pruebas Automatizadas Backend Exitosas + 9 Pruebas E2E Diseñadas)**
+**Estado General de la Suite:** **CUMPLE AL 100% (73/73 Pruebas Automatizadas Backend Exitosas + 9 Pruebas E2E Diseñadas)**
 
 ---
 
@@ -23,14 +23,14 @@ Se subsanó la carencia previa de pruebas en el backend implementando una suite 
 
 | Código | Requisito Funcional / No Funcional | Módulos Evaluados | Archivos de Prueba | Estado |
 | :--- | :--- | :--- | :--- | :--- |
-| **RF-01** | **Recepción e Inspección de Ingreso**<br>Captura de kilometraje, queja del cliente, combustible, inventario de pertenencias y daños. | `work-orders.schema.ts`<br>`work-orders.router.ts`<br>`work-orders.pdf.ts` | `schemas.test.ts`<br>`work-orders.integration.test.ts`<br>`pdf-generation.test.ts` | 🟢 Aprobado |
-| **RF-02** | **Asignación y Planificación de Bahía**<br>Asignación de técnico mecánico por parte del Asesor o Admin; inicio de diagnóstico. | `work-orders.router.ts`<br>`work-orders.service.ts` | `state-machine.test.ts`<br>`middleware-rbac.integration.test.ts`<br>`work-orders.integration.test.ts` | 🟢 Aprobado |
-| **RF-03** | **Diagnóstico Técnico y Triaje Asistido**<br>Registro de diagnóstico técnico y notas de taller; asistencia del copiloto SmartMec. | `work-orders.schema.ts`<br>`ai.service.ts`<br>`ai.router.ts` | `ai-service.test.ts`<br>`ai.integration.test.ts`<br>`schemas.test.ts` | 🟢 Aprobado |
-| **RF-04** | **Cotización de Repuestos y Aprobación**<br>Presupuesto con ítems de catálogo o manuales; aprobación/rechazo de cliente y cálculo dinámico. | `work-orders.router.ts`<br>`work-orders.schema.ts`<br>`catalog.schema.ts` | `work-orders-calculations.test.ts`<br>`schemas.test.ts`<br>`work-orders.integration.test.ts` | 🟢 Aprobado |
-| **RF-05** | **Control de Calidad y Finalización Técnica**<br>Transición a COMPLETED requiere diagnóstico formal y 0 ítems pendientes de aprobación. | `work-orders.service.ts`<br>`work-orders.router.ts` | `state-machine.test.ts`<br>`work-orders.integration.test.ts` | 🟢 Aprobado |
-| **RF-06** | **Entrega, Bloqueo Inmutable y Factura**<br>Paso a DELIVERED bloquea ediciones; genera instantánea de reporte y emite PDFs de entrega y recibo. | `work-orders.router.ts`<br>`work-orders.pdf.ts` | `state-machine.test.ts`<br>`work-orders.integration.test.ts`<br>`pdf-generation.test.ts` | 🟢 Aprobado |
-| **RNF-07** | **Registro Único y No Redundancia**<br>Los datos de cliente y vehículo no se re-digitan; validación de placa normalizada y kilometraje. | `vehicles.schema.ts`<br>`vehicles.service.ts`<br>`clients.router.ts` | `schemas.test.ts`<br>`clients-and-vehicles.integration.test.ts` | 🟢 Aprobado |
-| **RNF-09** | **Trazabilidad, Auditoría y Seguridad**<br>Auditoría inmutable de eventos (`WorkOrderEvent`), contraseñas con PBKDF2 (310k rondas), tokens HMAC y cabeceras CSP/HSTS. | `password.ts`<br>`auth.service.ts`<br>`auth.ts`<br>`app.ts` | `password.test.ts`<br>`auth-service.test.ts`<br>`auth.integration.test.ts`<br>`health-and-security.integration.test.ts` | 🟢 Aprobado |
+| **RF-01** | **Recepción e Inspección de Ingreso**<br>Captura de kilometraje, queja del cliente, combustible, inventario de pertenencias y daños. | `work-orders.schema.ts`<br>`work-orders.router.ts`<br>`work-orders.pdf.ts` | `schemas.test.ts`<br>`work-orders.integration.test.ts`<br>`pdf-generation.test.ts` | Aprobado |
+| **RF-02** | **Asignación y Planificación de Bahía**<br>Asignación de técnico mecánico por parte del Asesor o Admin; inicio de diagnóstico. | `work-orders.router.ts`<br>`work-orders.service.ts` | `state-machine.test.ts`<br>`middleware-rbac.integration.test.ts`<br>`work-orders.integration.test.ts` | Aprobado |
+| **RF-03** | **Diagnóstico Técnico y Triaje Asistido**<br>Registro de diagnóstico técnico y notas de taller; asistencia del copiloto SmartMec. | `work-orders.schema.ts`<br>`ai.service.ts`<br>`ai.router.ts` | `ai-service.test.ts`<br>`ai.integration.test.ts`<br>`schemas.test.ts` | Aprobado |
+| **RF-04** | **Cotización de Repuestos y Aprobación**<br>Presupuesto con ítems de catálogo o manuales; aprobación/rechazo de cliente y cálculo dinámico. | `work-orders.router.ts`<br>`work-orders.schema.ts`<br>`catalog.schema.ts` | `work-orders-calculations.test.ts`<br>`schemas.test.ts`<br>`work-orders.integration.test.ts` | Aprobado |
+| **RF-05** | **Control de Calidad y Finalización Técnica**<br>Transición a COMPLETED requiere diagnóstico formal y 0 ítems pendientes de aprobación. | `work-orders.service.ts`<br>`work-orders.router.ts` | `state-machine.test.ts`<br>`work-orders.integration.test.ts` | Aprobado |
+| **RF-06** | **Entrega, Bloqueo Inmutable y Factura**<br>Paso a DELIVERED bloquea ediciones; genera instantánea de reporte y emite PDFs de entrega y recibo. | `work-orders.router.ts`<br>`work-orders.pdf.ts` | `state-machine.test.ts`<br>`work-orders.integration.test.ts`<br>`pdf-generation.test.ts` | Aprobado |
+| **RNF-07** | **Registro Único y No Redundancia**<br>Los datos de cliente y vehículo no se re-digitan; validación de placa normalizada y kilometraje. | `vehicles.schema.ts`<br>`vehicles.service.ts`<br>`clients.router.ts` | `schemas.test.ts`<br>`clients-and-vehicles.integration.test.ts` | Aprobado |
+| **RNF-09** | **Trazabilidad, Auditoría y Seguridad**<br>Auditoría inmutable de eventos (`WorkOrderEvent`), contraseñas con PBKDF2 (310k rondas), tokens HMAC y cabeceras CSP/HSTS. | `password.ts`<br>`auth.service.ts`<br>`auth.ts`<br>`app.ts` | `password.test.ts`<br>`auth-service.test.ts`<br>`auth.integration.test.ts`<br>`health-and-security.integration.test.ts` | Aprobado |
 
 ---
 
@@ -63,12 +63,12 @@ Se subsanó la carencia previa de pruebas en el backend implementando una suite 
 
 ### 3.4. `state-machine.test.ts` (3 pruebas)
 - Comprobación de la matriz completa de transiciones permitidas:
-  - `RECEIVED` ➔ `DIAGNOSING`
-  - `DIAGNOSING` ➔ `IN_PROGRESS` o `WAITING_PARTS`
-  - `IN_PROGRESS` ➔ `WAITING_PARTS` o `COMPLETED`
-  - `WAITING_PARTS` ➔ `IN_PROGRESS`
-  - `COMPLETED` ➔ `DELIVERED`
-  - `DELIVERED` ➔ Estado final (bloqueado)
+  - `RECEIVED` → `DIAGNOSING`
+  - `DIAGNOSING` → `IN_PROGRESS` o `WAITING_PARTS`
+  - `IN_PROGRESS` → `WAITING_PARTS` o `COMPLETED`
+  - `WAITING_PARTS` → `IN_PROGRESS`
+  - `COMPLETED` → `DELIVERED`
+  - `DELIVERED` → Estado final (bloqueado)
 - Rechazo de saltos inválidos (ej. de `RECEIVED` directo a `COMPLETED` o `DELIVERED`).
 - Control de perfiles por estado: permisos exclusivos de Admin/Asesor para `DELIVERED` y recepción; permisos de Admin/Técnico para operaciones en bahía.
 
@@ -198,10 +198,10 @@ npx playwright test
 
 | Métrica | Valor Previo | Valor Actual | Veredicto |
 | :--- | :--- | :--- | :--- |
-| **Pruebas Unitarias Backend** | 0 pruebas (carpeta vacía) | **36 pruebas** (11 suites) | 🟢 Cumple |
-| **Pruebas de Integración Backend** | 0 pruebas (carpeta vacía) | **37 pruebas** (7 suites) | 🟢 Cumple |
-| **Pruebas E2E / Funcionales** | 2 pruebas básicas | **9 pruebas** (3 suites) | 🟢 Cumple |
-| **Tasa de Éxito en Ejecución** | N/A | **100% (73/73 pasadas)** | 🟢 Cumple |
-| **Documento Consolidado de Validación** | No existía | **`docs/TESTING_VALIDATION_REPORT.md`** | 🟢 Cumple |
+| **Pruebas Unitarias Backend** | 0 pruebas (carpeta vacía) | **36 pruebas** (11 suites) | Cumple |
+| **Pruebas de Integración Backend** | 0 pruebas (carpeta vacía) | **37 pruebas** (7 suites) | Cumple |
+| **Pruebas E2E / Funcionales** | 2 pruebas básicas | **9 pruebas** (3 suites) | Cumple |
+| **Tasa de Éxito en Ejecución** | N/A | **100% (73/73 pasadas)** | Cumple |
+| **Documento Consolidado de Validación** | No existía | **`docs/TESTING_VALIDATION_REPORT.md`** | Cumple |
 
-**Dictamen:** Se satisface plenamente el criterio de aceptación. El estado pasa de 🔴 No cumple a 🟢 **CUMPLE SATISFACTORIAMENTE**.
+**Dictamen:** Se satisface plenamente el criterio de aceptación. El estado pasa de No cumple a **CUMPLE SATISFACTORIAMENTE**.

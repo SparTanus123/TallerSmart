@@ -74,16 +74,16 @@ Where [x] = height of logo mark
 ## Incorrect Usage
 
 ### Absolute Don'ts
-- ❌ Stretch or compress logo
-- ❌ Rotate at angles
-- ❌ Add drop shadows
-- ❌ Apply gradient fills
-- ❌ Use unapproved colors
-- ❌ Add strokes or outlines
-- ❌ Place on busy backgrounds
-- ❌ Crop any portion
-- ❌ Rearrange elements
-- ❌ Add additional elements
+- Do not stretch or compress logo
+- Do not rotate at angles
+- Do not add drop shadows
+- Do not apply gradient fills
+- Do not use unapproved colors
+- Do not add strokes or outlines
+- Do not place on busy backgrounds
+- Do not crop any portion
+- Do not rearrange elements
+- Do not add additional elements
 
 ### Visual Examples
 ```

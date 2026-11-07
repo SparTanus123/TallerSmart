@@ -1,14 +1,14 @@
 # Documentación Formal del Proyecto TallerSmart
-> 🎯 **Hito Académico:** **Avance 6 — Terminación, pruebas y validación (9 de noviembre)**  
-> 🟢 **Estado de los Entregables:** Documentación técnica, académica y empírica al 100% completada.
+> **Hito Académico:** **Avance 6 — Terminación, pruebas y validación (9 de noviembre)**  
+> **Estado de los Entregables:** Documentación técnica, académica y empírica al 100% completada.
 
 En este directorio se encuentran los documentos técnicos, académicos y reportes de calidad que respaldan el diseño, arquitectura, aseguramiento de calidad y evaluación experimental de la plataforma **TallerSmart**.
 
 ---
 
-## 📚 Documentos Disponibles
+## Documentos Disponibles
 
-### 1. 📖 [Memoria Técnica y Documento Académico del Proyecto](MEMORIA_TECNICA_PROYECTO.md)
+### 1. [Memoria Técnica y Documento Académico del Proyecto](MEMORIA_TECNICA_PROYECTO.md)
 * **Archivo:** [`MEMORIA_TECNICA_PROYECTO.md`](MEMORIA_TECNICA_PROYECTO.md)
 * **Alcance:** Documento formal completo del proyecto de ingeniería de software.
 * **Contenido:**
@@ -24,7 +24,7 @@ En este directorio se encuentran los documentos técnicos, académicos y reporte
 
 ---
 
-### 2. 🧪 [Informe Consolidado de Pruebas y Validación de Calidad](TESTING_VALIDATION_REPORT.md)
+### 2. [Informe Consolidado de Pruebas y Validación de Calidad](TESTING_VALIDATION_REPORT.md)
 * **Archivo:** [`TESTING_VALIDATION_REPORT.md`](TESTING_VALIDATION_REPORT.md)
 * **Alcance:** Memoria de pruebas unitarias, integración y End-to-End.
 * **Contenido:**
@@ -36,7 +36,7 @@ En este directorio se encuentran los documentos técnicos, académicos y reporte
 
 ---
 
-### 3. 🤖 [Informe Formal de Evaluación del Componente Inteligente (SmartMec)](SMARTMEC_AI_EVALUATION_REPORT.md)
+### 3. [Informe Formal de Evaluación del Componente Inteligente (SmartMec)](SMARTMEC_AI_EVALUATION_REPORT.md)
 * **Archivo:** [`SMARTMEC_AI_EVALUATION_REPORT.md`](SMARTMEC_AI_EVALUATION_REPORT.md)
 * **Alcance:** Evaluación cuantitativa y cualitativa del modelo de lenguaje Google Gemini (`gemini-3.5-flash-lite`).
 * **Contenido:**
