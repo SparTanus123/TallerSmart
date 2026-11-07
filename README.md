@@ -4,7 +4,7 @@ Plataforma integral de grado de ingeniería diseñada para la digitalización, c
 
 ---
 
-## 📋 Resumen de Cumplimiento: Avance 6 (9 nov.)
+## 📋 Resumen de Cumplimiento:
 
 El proyecto satisface a cabalidad los cuatro componentes requeridos para la entrega de **Terminación, pruebas y validación**:
 
