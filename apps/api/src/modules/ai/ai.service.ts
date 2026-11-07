@@ -92,25 +92,25 @@ async function buildWorkshopDatabaseContext(
     });
 
     let ctx = `\n[BASE DE DATOS TALLERSMART - ESTADO OPERATIVO EN TIEMPO REAL]\n`;
-    ctx += `📊 Resumen global del taller:\n`;
+    ctx += `Resumen global del taller:\n`;
     ctx += `- Recibido: ${statusMap['RECEIVED'] || 0} | Diagnóstico: ${statusMap['DIAGNOSING'] || 0} | En Proceso: ${statusMap['IN_PROGRESS'] || 0} | Espera Repuestos: ${statusMap['WAITING_PARTS'] || 0} | Finalizado: ${statusMap['COMPLETED'] || 0} | Entregado: ${statusMap['DELIVERED'] || 0}\n`;
     ctx += `- Mecánicos registrados: ${techs.map((t) => t.name).join(', ') || 'Ninguno'}\n`;
 
     if (activeOrders.length === 0) {
       ctx += `- Actualmente no hay órdenes de trabajo activas en bahía.\n`;
     } else {
-      ctx += `\n📋 Órdenes de Trabajo Activas (${activeOrders.length}):\n`;
+      ctx += `\nÓrdenes de Trabajo Activas (${activeOrders.length}):\n`;
       for (const o of activeOrders) {
         const items = o.items.map((i) => `${i.nameSnapshot} (cant: ${i.quantity})`).join(', ') || 'Sin repuestos/servicios cargados';
         const tech = o.technician?.name ?? 'Sin asignar';
         ctx += `• [OT: ${o.number}] (ID: ${o.id})
-  - 🚗 Vehículo: ${o.vehicle.make} ${o.vehicle.model} (${o.vehicle.year}) · Placa: ${o.vehicle.plate} · Km: ${o.mileageIn}
-  - 👤 Cliente: ${o.client.name} (Tel: ${o.client.phone})
-  - 🔄 Estado: ${o.status} | 🚨 Urgencia: ${o.urgency} | 👨‍🔧 Técnico: ${tech}
-  - 📝 Queja: "${o.complaint}"
-  - 🔍 Diagnóstico: "${o.diagnosis || 'Pendiente'}"
-  - 📦 Repuestos/Servicios: ${items}
-  - 📑 Notas: "${o.notes || 'Ninguna'}"\n`;
+  - Vehículo: ${o.vehicle.make} ${o.vehicle.model} (${o.vehicle.year}) · Placa: ${o.vehicle.plate} · Km: ${o.mileageIn}
+  - Cliente: ${o.client.name} (Tel: ${o.client.phone})
+  - Estado: ${o.status} | Urgencia: ${o.urgency} | Técnico: ${tech}
+  - Queja: "${o.complaint}"
+  - Diagnóstico: "${o.diagnosis || 'Pendiente'}"
+  - Repuestos/Servicios: ${items}
+  - Notas: "${o.notes || 'Ninguna'}"\n`;
       }
     }
 
@@ -128,13 +128,13 @@ async function buildWorkshopDatabaseContext(
       });
       if (specific) {
         ctx += `\n[DETALLE PROFUNDO DE LA OT SELECCIONADA: ${specific.number}]
-- 🚗 Vehículo: ${specific.vehicle.make} ${specific.vehicle.model} (${specific.vehicle.year}) · Placa: ${specific.vehicle.plate}
-- 👤 Cliente: ${specific.client.name} (Tel: ${specific.client.phone})
-- 🔄 Estado: ${specific.status} | 🚨 Urgencia: ${specific.urgency} | 👨‍🔧 Técnico: ${specific.technician?.name ?? 'Sin asignar'}
-- 📝 Queja: "${specific.complaint}"
-- 🔍 Diagnóstico: "${specific.diagnosis || 'Pendiente'}"
-- 📦 Ítems/Repuestos: ${specific.items.map((i) => `${i.nameSnapshot} (cant: ${i.quantity}, $${i.unitPrice})`).join(', ') || 'Ninguno'}
-- 📑 Notas de trabajo: "${specific.notes || 'Ninguna'}"
+- Vehículo: ${specific.vehicle.make} ${specific.vehicle.model} (${specific.vehicle.year}) · Placa: ${specific.vehicle.plate}
+- Cliente: ${specific.client.name} (Tel: ${specific.client.phone})
+- Estado: ${specific.status} | Urgencia: ${specific.urgency} | Técnico: ${specific.technician?.name ?? 'Sin asignar'}
+- Queja: "${specific.complaint}"
+- Diagnóstico: "${specific.diagnosis || 'Pendiente'}"
+- Ítems/Repuestos: ${specific.items.map((i) => `${i.nameSnapshot} (cant: ${i.quantity}, $${i.unitPrice})`).join(', ') || 'Ninguno'}
+- Notas de trabajo: "${specific.notes || 'Ninguna'}"
 `;
       }
     } else if (specificVehicleId) {
@@ -151,8 +151,8 @@ async function buildWorkshopDatabaseContext(
       });
       if (v) {
         ctx += `\n[DETALLE DEL VEHÍCULO SELECCIONADO: ${v.plate}]
-- 🚗 ${v.make} ${v.model} (${v.year}) · Dueño: ${v.currentClient.name} · Km: ${v.mileage}
-- 📋 Historial reciente: ${v.orders.map((o) => `OT ${o.number}: ${o.complaint} -> ${o.diagnosis || 'OK'}`).join(' | ') || 'Sin órdenes previas'}
+- Vehículo: ${v.make} ${v.model} (${v.year}) · Dueño: ${v.currentClient.name} · Km: ${v.mileage}
+- Historial reciente: ${v.orders.map((o) => `OT ${o.number}: ${o.complaint} -> ${o.diagnosis || 'OK'}`).join(' | ') || 'Sin órdenes previas'}
 `;
       }
     }
@@ -171,8 +171,8 @@ async function buildWorkshopDatabaseContext(
         });
         if (foundVehicle) {
           ctx += `\n[BÚSQUEDA AUTOMÁTICA EN BASE DE DATOS PARA PLACA "${cleanPlate}"]:
-- 🚗 ${foundVehicle.make} ${foundVehicle.model} (${foundVehicle.year}) · Cliente: ${foundVehicle.currentClient.name}
-- 📋 Historial de OTs: ${foundVehicle.orders.map((o) => `OT ${o.number} [${o.status}]: ${o.complaint} -> ${o.diagnosis || 'Revisión'}`).join('; ') || 'Sin OTs previas'}
+- Vehículo: ${foundVehicle.make} ${foundVehicle.model} (${foundVehicle.year}) · Cliente: ${foundVehicle.currentClient.name}
+- Historial de OTs: ${foundVehicle.orders.map((o) => `OT ${o.number} [${o.status}]: ${o.complaint} -> ${o.diagnosis || 'Revisión'}`).join('; ') || 'Sin OTs previas'}
 `;
         }
       }
@@ -222,7 +222,7 @@ export async function getSmartMecBriefing() {
       id: `sug-urg-${o.id}`,
       icon: '🚨',
       title: `Prioridad Alta: ${o.vehicle.make} (${o.vehicle.plate})`,
-      prompt: `🚨 ¿Cuál es el plan de acción prioritario para la ${o.vehicle.make} ${o.vehicle.model} (OT ${o.number}) de alta urgencia con falla "${o.complaint}"?`,
+      prompt: `¿Cuál es el plan de acción prioritario para la ${o.vehicle.make} ${o.vehicle.model} (OT ${o.number}) de alta urgencia con falla "${o.complaint}"?`,
       workOrderId: o.id,
     });
   }
@@ -235,7 +235,7 @@ export async function getSmartMecBriefing() {
       id: `sug-part-${o.id}`,
       icon: '📦',
       title: `Repuestos: ${o.vehicle.make} ${o.vehicle.model}`,
-      prompt: `📦 ¿Qué repuestos (${partsNames || 'pendientes'}) requiere la OT ${o.number} (${o.vehicle.plate}) y qué trabajos preliminares se pueden adelantar en bahía?`,
+      prompt: `¿Qué repuestos (${partsNames || 'pendientes'}) requiere la OT ${o.number} (${o.vehicle.plate}) y qué trabajos preliminares se pueden adelantar en bahía?`,
       workOrderId: o.id,
     });
   }
@@ -247,7 +247,7 @@ export async function getSmartMecBriefing() {
       id: `sug-diag-${o.id}`,
       icon: '🔍',
       title: `Diagnóstico: ${o.vehicle.make} (${o.complaint.slice(0, 24)}...)`,
-      prompt: `🔍 Guía de diagnóstico técnico para la ${o.vehicle.make} ${o.vehicle.model} (${o.vehicle.plate}): "${o.complaint}". ¿Qué pruebas de taller y códigos OBD-II verificar?`,
+      prompt: `Guía de diagnóstico técnico para la ${o.vehicle.make} ${o.vehicle.model} (${o.vehicle.plate}): "${o.complaint}". ¿Qué pruebas de taller y códigos OBD-II verificar?`,
       workOrderId: o.id,
     });
   }
@@ -259,7 +259,7 @@ export async function getSmartMecBriefing() {
       id: `sug-prog-${o.id}`,
       icon: '🔧',
       title: `En curso: ${o.vehicle.make} (${o.vehicle.plate})`,
-      prompt: `🔧 Resumen técnico y puntos clave de control de calidad para la OT ${o.number} (${o.vehicle.make} ${o.vehicle.model}) asignada a ${o.technician?.name ?? 'técnico'}.`,
+      prompt: `Resumen técnico y puntos clave de control de calidad para la OT ${o.number} (${o.vehicle.make} ${o.vehicle.model}) asignada a ${o.technician?.name ?? 'técnico'}.`,
       workOrderId: o.id,
     });
   }
@@ -269,7 +269,7 @@ export async function getSmartMecBriefing() {
     id: 'sug-global-summary',
     icon: '📊',
     title: 'Resumen de bahías del taller',
-    prompt: `🚗 ¿Podrías darme un informe ejecutivo del estado de todas las órdenes de trabajo activas en el taller, técnicos asignados y cuellos de botella?`,
+    prompt: `¿Podrías darme un informe ejecutivo del estado de todas las órdenes de trabajo activas en el taller, técnicos asignados y cuellos de botella?`,
   });
 
   // Fallbacks if few orders
@@ -278,38 +278,38 @@ export async function getSmartMecBriefing() {
       id: 'sug-obd-check',
       icon: '⚡',
       title: 'Diagnóstico OBD-II y DTCs',
-      prompt: `⚡ ¿Cómo interpretar y diagnosticar los códigos de falla OBD-II más frecuentes (P0300, P0171, P0420) en el taller?`,
+      prompt: `¿Cómo interpretar y diagnosticar los códigos de falla OBD-II más frecuentes (P0300, P0171, P0420) en el taller?`,
     });
     suggestions.push({
       id: 'sug-preventive-guide',
       icon: '⚙️',
       title: 'Plan preventivo por km',
-      prompt: `⚙️ ¿Cuáles son los puntos críticos de mantenimiento preventivo para vehículos con más de 80.000 km?`,
+      prompt: `¿Cuáles son los puntos críticos de mantenimiento preventivo para vehículos con más de 80.000 km?`,
     });
   }
 
-  // Compute robust rule-based briefing text with emojis
+  // Compute robust rule-based briefing text (natural and clean)
   let briefingText = '';
   if (activeOrders.length === 0) {
-    briefingText = `🚗 Taller al día sin órdenes de trabajo pendientes en bahía. 📋 Registra una nueva recepción para iniciar el flujo de diagnósticos con IA. 🔧`;
+    briefingText = `Taller al día sin órdenes de trabajo pendientes en bahía. Registra una nueva recepción para iniciar el flujo de diagnósticos.`;
   } else {
     const parts: string[] = [];
     if (highUrgency.length > 0) {
-      parts.push(`🚨 ${highUrgency.length} OT${highUrgency.length > 1 ? 's' : ''} de alta urgencia`);
+      parts.push(`${highUrgency.length} OT${highUrgency.length > 1 ? 's' : ''} de alta urgencia`);
     }
     if (waitingParts.length > 0) {
-      parts.push(`📦 ${waitingParts.length} esperan repuestos críticos`);
+      parts.push(`${waitingParts.length} esperan repuestos críticos`);
     }
     if (inProgress.length > 0) {
-      parts.push(`🔧 ${inProgress.length} en proceso técnico`);
+      parts.push(`${inProgress.length} en proceso técnico`);
     }
     if (diagnosing.length > 0) {
-      parts.push(`🔍 ${diagnosing.length} en diagnóstico`);
+      parts.push(`${diagnosing.length} en diagnóstico`);
     }
     if (unassigned.length > 0) {
-      parts.push(`⚠️ ${unassigned.length} sin técnico asignado`);
+      parts.push(`${unassigned.length} sin técnico asignado`);
     }
-    briefingText = `🚗 ${activeOrders.length} OTs en taller: ${parts.join('. ')}. 💡 Consulta sugerencias en SmartMec. ⏱️`;
+    briefingText = `${activeOrders.length} OTs en taller: ${parts.join('. ')}. Consulta sugerencias operativas en SmartMec.`;
   }
 
   // Attempt AI enrichment from Gemini if active
@@ -324,7 +324,7 @@ Genera un BRIEFING DEL DÍA de exactamente 1 o 2 oraciones concisas para el jefe
 - Sin técnico asignado: ${unassigned.length}
 
 REQUISITOS OBLIGATORIOS:
-1. Incluye emojis automotrices y de taller acordes (🚗, 🔧, 📦, ⏱️, ⚠️, 🚨, 💡, 👨‍🔧).
+1. Redacción natural, profesional y sobria. NO satures con emojis (máximo 1 discreto o preferiblemente ninguno).
 2. Sé conciso (máximo 220 caracteres).
 3. Enfócate en los puntos críticos y una recomendación práctica de acción para hoy.
 4. Devuelve SOLO el texto del briefing, sin comillas ni títulos adicionales.`;

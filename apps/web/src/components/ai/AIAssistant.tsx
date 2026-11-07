@@ -98,16 +98,16 @@ export default function AIAssistant() {
     {
       id: "welcome-1",
       role: "model",
-      content: `¡Hola ${user?.name ? user.name.split(" ")[0] : "taller"}! 🚗 Soy SmartMec, el copiloto técnico inteligente de TallerSmart 🔧.
+      content: `¡Hola ${user?.name ? user.name.split(" ")[0] : "taller"}! Soy SmartMec, el copiloto técnico inteligente de TallerSmart.
 
-Tengo acceso directo a la base de datos de órdenes de trabajo, vehículos y repuestos del taller 📋. Puedo asistirte en tiempo real con:
-• 🔍 Diagnóstico mecánico y códigos OBD-II (DTCs, síntomas y posibles causas).
-• 🚗 Estado y seguimiento de Órdenes de Trabajo activas en bahía.
-• 📦 Control de repuestos y piezas en espera de proveedor.
-• ⚙️ Planes de mantenimiento preventivo según kilometraje y modelo.
-• 📑 Redacción de informes claros de entrega para clientes.
+Tengo acceso directo a la base de datos de órdenes de trabajo, vehículos y repuestos del taller. Puedo asistirte en tiempo real con:
+• Diagnóstico mecánico y códigos OBD-II (DTCs, síntomas y posibles causas).
+• Estado y seguimiento de Órdenes de Trabajo activas en bahía.
+• Control de repuestos y piezas en espera de proveedor.
+• Planes de mantenimiento preventivo según kilometraje y modelo.
+• Redacción de informes claros de entrega para clientes.
 
-¿En qué vehículo u orden de trabajo estamos trabajando hoy? 🛠️`,
+¿En qué vehículo u orden de trabajo estamos trabajando hoy?`,
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       model: "SmartMec / Gemini",
     },
@@ -204,7 +204,7 @@ Tengo acceso directo a la base de datos de órdenes de trabajo, vehículos y rep
           id: `sug-${ot.id}`,
           icon: "📦",
           title: `Repuestos: ${ot.vehicle.make} (${ot.vehicle.plate})`,
-          prompt: `📦 ¿Qué repuestos están pendientes y cuál es el plan de trabajo para la OT ${ot.number} (${ot.vehicle.make} ${ot.vehicle.model})?`,
+          prompt: `¿Qué repuestos están pendientes y cuál es el plan de trabajo para la OT ${ot.number} (${ot.vehicle.make} ${ot.vehicle.model})?`,
           workOrderId: ot.id,
         });
       } else if (ot.urgency === "high") {
@@ -212,7 +212,7 @@ Tengo acceso directo a la base de datos de órdenes de trabajo, vehículos y rep
           id: `sug-${ot.id}`,
           icon: "🚨",
           title: `Urgente: ${ot.vehicle.make} (${ot.vehicle.plate})`,
-          prompt: `🚨 ¿Cómo acelerar el diagnóstico y reparación de la OT ${ot.number} (${ot.vehicle.make} ${ot.vehicle.model}) con queja: "${ot.complaint}"?`,
+          prompt: `¿Cómo acelerar el diagnóstico y reparación de la OT ${ot.number} (${ot.vehicle.make} ${ot.vehicle.model}) con queja: "${ot.complaint}"?`,
           workOrderId: ot.id,
         });
       } else {
@@ -220,7 +220,7 @@ Tengo acceso directo a la base de datos de órdenes de trabajo, vehículos y rep
           id: `sug-${ot.id}`,
           icon: "🔧",
           title: `Diagnóstico: ${ot.vehicle.make} (${ot.vehicle.plate})`,
-          prompt: `🔍 Guía técnica para diagnosticar la queja "${ot.complaint}" en ${ot.vehicle.make} ${ot.vehicle.model} (${ot.vehicle.plate}).`,
+          prompt: `Guía técnica para diagnosticar la queja "${ot.complaint}" en ${ot.vehicle.make} ${ot.vehicle.model} (${ot.vehicle.plate}).`,
           workOrderId: ot.id,
         });
       }
@@ -230,14 +230,14 @@ Tengo acceso directo a la base de datos de órdenes de trabajo, vehículos y rep
       id: "sug-status-all",
       icon: "🚗",
       title: "Estado general del taller",
-      prompt: "🚗 ¿Cuáles son las órdenes de trabajo activas en el taller y qué vehículos requieren atención hoy?",
+      prompt: "¿Cuáles son las órdenes de trabajo activas en el taller y qué vehículos requieren atención hoy?",
     });
 
     list.push({
       id: "sug-obd-dtc",
       icon: "⚡",
       title: "Diagnóstico OBD-II y DTCs",
-      prompt: "⚡ ¿Cómo diagnosticar los códigos de falla OBD-II más frecuentes (P0300, P0171, P0420) en el taller?",
+      prompt: "¿Cómo diagnosticar los códigos de falla OBD-II más frecuentes (P0300, P0171, P0420) en el taller?",
     });
 
     return list;
@@ -715,7 +715,7 @@ Tengo acceso directo a la base de datos de órdenes de trabajo, vehículos y rep
                 <span>Conexión con Base de Datos</span>
               </div>
               <p className="text-[12px] text-indigo-900/80 leading-relaxed">
-                SmartMec tiene acceso en tiempo real a las órdenes de trabajo, vehículos, placas, quejas de clientes y repuestos de TallerSmart 🚗. Pregúntale por cualquier vehículo o selecciona una OT en el menú superior 📋.
+                SmartMec tiene acceso en tiempo real a las órdenes de trabajo, vehículos, placas, quejas de clientes y repuestos de TallerSmart. Pregúntale por cualquier vehículo o selecciona una OT en el menú superior.
               </p>
             </div>
           </div>
