@@ -56,7 +56,7 @@ function renderCleanMessage(content: string) {
             parts.push(line.slice(lastIndex, match.index));
           }
           parts.push(
-            <span key={`${idx}-${match.index}`} className="font-semibold text-fg">
+            <span key={`${idx}-${match.index}`} className="font-semibold">
               {match[1]}
             </span>
           );
@@ -617,13 +617,17 @@ Tengo acceso directo a la base de datos de órdenes de trabajo, vehículos y rep
                   <div
                     className={`max-w-[82%] rounded-2xl px-4 py-3 text-[14px] leading-relaxed shadow-sm ${
                       msg.role === "user"
-                        ? "bg-brand-500 text-[#17212b] rounded-br-none"
+                        ? "bg-brand-500 text-primary-foreground rounded-br-none"
                         : "bg-canvas border border-line text-fg rounded-bl-none"
                     }`}
                   >
                     {renderCleanMessage(msg.content)}
                     <div
-                      className="mt-1.5 flex items-center justify-between text-[11px] text-fg-3"
+                      className={`mt-1.5 flex items-center text-[11px] ${
+                        msg.role === "user"
+                          ? "justify-end text-primary-foreground/75"
+                          : "justify-between text-fg-3"
+                      }`}
                     >
                       <span>{msg.timestamp}</span>
                       {msg.model && msg.role === "model" && (
