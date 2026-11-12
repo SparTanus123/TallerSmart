@@ -338,32 +338,17 @@ router.patch('/:id/status', async (req, res, next) => {
         throw Object.assign(new Error('DIAGNOSIS_REQUIRED'), { status: 409 });
       }
       if (
-        status === 'COMPLETED' &&
+        (status === 'COMPLETED' || status === 'DELIVERED') &&
         (await tx.workOrderItem.count({ where: { workOrderId: before.id, authorizationStatus: 'PENDING' } }))
       ) {
         throw Object.assign(new Error('PENDING_WORK_REQUIRES_CLIENT_APPROVAL'), { status: 409 });
       }
 
-      const updateData: {
-        status: typeof status;
-        reportApprovedAt?: Date;
-        reportApprovedById?: string;
-        approvedReportSnapshot?: string;
-      } = { status };
-
-      if (status === 'DELIVERED') {
-        if (!before.reportApprovedAt || !before.approvedReportSnapshot) {
-          updateData.reportApprovedAt = before.reportApprovedAt ?? new Date();
-          updateData.reportApprovedById = before.reportApprovedById ?? actorId;
-          updateData.approvedReportSnapshot =
-            before.approvedReportSnapshot ??
-            before.deliveryReportDraft ??
-            before.notes ??
-            'Vehículo entregado al cliente a satisfacción.';
-        }
+      if (status === 'DELIVERED' && (!before.reportApprovedAt || !before.approvedReportSnapshot)) {
+        throw Object.assign(new Error('APPROVED_REPORT_REQUIRED'), { status: 409 });
       }
 
-      const updated = await tx.workOrder.update({ where: { id: before.id }, data: updateData });
+      const updated = await tx.workOrder.update({ where: { id: before.id }, data: { status } });
       await tx.workOrderEvent.create({
         data: {
           workOrderId: before.id,

@@ -21,7 +21,7 @@ En el sector del mantenimiento y reparación automotriz en América Latina, las 
 
 La plataforma se rige por dos principios arquitectónicos rectores: el **Registro Único de Datos (RNF-07)**, que elimina la redundancia e impide la re-digitación de información desde la recepción inicial hasta la entrega final; y la **Trazabilidad y Auditoría Inmutable (RNF-09)**, implementada mediante una máquina de estados finitos determinista y registros históricos auditables de transiciones de estado, modificaciones de odómetro e ítems presupuestados en la misma transacción de base de datos.
 
-La validación del sistema evidenció una tasa de éxito del 100% en la batería de 73 pruebas automatizadas de backend (36 unitarias y 37 de integración), 9 pruebas End-to-End con Playwright, cumplimiento estricto del estándar OWASP ASVS v4.0.3 (100%), calificación de 10.0/10 en OpenSSF Scorecard, y una tasa de acierto diagnóstico del 100% en un benchmark de 20 casos automotrices con el copiloto SmartMec sin alucinaciones detectadas.
+La revalidación local del 11 de noviembre de 2026 registró 80 pruebas backend y 9 pruebas Playwright aprobadas, además de una compilación web correcta. Las suites backend incluyen dobles de Prisma y las pruebas de navegador cubren login, navegación y smoke; todavía falta demostrar el recorrido integral con PostgreSQL real. El benchmark técnico de SmartMec evaluó 20 casos, pero la comparación con plantillas y revisión independiente por personal de taller siguen pendientes.
 
 **Palabras clave:** *Ingeniería de Software, Trazabilidad Automotriz, Single Source of Truth, Modelos de Lenguaje (LLM), Google Gemini API, Máquina de Estados Finitos, OWASP ASVS, Multi-tenancy.*
 
@@ -35,7 +35,7 @@ In the automotive maintenance and repair industry in Latin America, small and me
 
 The architecture is strictly governed by two core engineering principles: **Single Source of Truth / Data Non-Redundancy (RNF-07)**, ensuring vehicle intake data flows seamlessly across bay planning, diagnostics, parts quotation, and delivery without duplicate data entry; and **Immutable Traceability and Auditability (RNF-09)**, enforced via a deterministic finite state machine and transactional event logs (`WorkOrderEvent` and `VehicleEvent`) capturing the authenticated actor, state transition, and payload deltas.
 
-Validation results demonstrate 100% compliance across 73 backend automated tests (36 unit and 37 integration tests), 9 Playwright E2E tests, 100% satisfaction of OWASP ASVS v4.0.3 criteria, 10.0/10 in OpenSSF Scorecard, and 100% diagnostic system accuracy across a 20-case automotive benchmark dataset with zero detected hallucinations.
+Local revalidation on November 11, 2026 recorded 80 passing backend tests and 9 passing Playwright tests, as well as a successful web production build. The backend suites include Prisma doubles and browser tests cover login, navigation, and smoke behavior; a full workflow demonstration against real PostgreSQL remains outstanding. SmartMec has a technical 20-case benchmark, while comparison with conventional templates and independent workshop review remain outstanding.
 
 **Keywords:** *Software Engineering, Automotive Traceability, Single Source of Truth, Large Language Models, Google Gemini, Finite State Machine, OWASP ASVS, Multi-tenancy.*
 
@@ -470,6 +470,8 @@ El servidor Express aplica cabeceras de respuesta de endurecimiento HTTP en cada
 
 ## Capítulo 6: Aseguramiento de Calidad, Pruebas y Validación (QA)
 
+> **Alcance de la evidencia:** Este capítulo describe suites y resultados consignados en informes anteriores. La suite Playwright del repositorio está definida, pero el resultado guardado corresponde a enumeración de casos, no a ejecución E2E. La revisión humana de SmartMec, la medición de tiempos de corrección y la utilidad en un taller aún no se han medido. El protocolo y el registro de ejecución están en [`AVANCE6_VALIDACION_Y_EVIDENCIAS.md`](AVANCE6_VALIDACION_Y_EVIDENCIAS.md).
+
 ### 6.1. Pirámide de Pruebas y Estrategia de Verificación
 
 Se adoptó una estrategia de calidad integral basada en la pirámide de pruebas de software, combinando análisis estático, pruebas unitarias, pruebas de integración HTTP, pruebas funcionales End-to-End, benchmarking cuantitativo de modelos de IA y escaneos de seguridad SAST/DAST:
@@ -477,7 +479,7 @@ Se adoptó una estrategia de calidad integral basada en la pirámide de pruebas 
 ```text
                   ▲
                  / \
-                /   \     E2E Playwright (9 pruebas de flujo completo)
+                /   \     E2E Playwright (9 casos definidos; ejecución por registrar)
                / E2E \
               /───────\
              /         \   Integración API Express (37 pruebas de endpoints)
@@ -502,8 +504,8 @@ Se adoptó una estrategia de calidad integral basada en la pirámide de pruebas 
 
 ### 6.4. Pruebas Funcionales y End-to-End (Playwright)
 - **Directorio:** [`tests/e2e`](file:///c:/Proyecto%20de%20Ing%201/tests/e2e)
-- **Métricas:** 9 pruebas automatizadas de navegador.
-- **Escenarios Verificados:** Verificación de títulos y navegación de arranque (`smoke.spec.ts`), renderizado de formulario de login, validación de atributos HTML5, respuesta ante credenciales erróneas y protección de rutas privadas (`auth.spec.ts`), gestión amigable de páginas 404, responsive design móvil y accesibilidad de inputs (`navigation.spec.ts`).
+- **Casos definidos:** 9 pruebas automatizadas de navegador.
+- **Estado de ejecución:** El JSON actualmente guardado registra la opción `--list`, 9 pruebas omitidas y 0 ejecutadas; por tanto, esos escenarios no se presentan aquí como validados en navegador. Ejecutar `pnpm test:e2e` y archivar el resultado del commit evaluado.
 
 ### 6.5. Evaluación Formal del Componente Inteligente (SmartMec Benchmark)
 - **Métricas de Evaluación Empírica (20 Casos Automotrices en Vivo):**
@@ -511,9 +513,9 @@ Se adoptó una estrategia de calidad integral basada en la pirámide de pruebas 
   - Precisión en Identificación del Sistema Automotriz: **100.0%** (13 de 13 casos de triaje).
   - Alineación de Nivel de Severidad / Urgencia: **71.4%** (con sesgo positivo pro-seguridad vial hacia nivel `ALTO` en fallas de frenos y lubricación).
   - Recall de Términos y Mecanismos Diagnósticos: **86.2%**.
-  - Tasa Libre de Alucinaciones: **100.0%** (0 alucinaciones; nula invención de repuestos no instalados o daños catastróficos ante quejas ambiguas).
-  - Tiempo de Inferencia Mediano (P50): **2.009 ms**.
-  - Tiempo de Inferencia Promedio: **4.025 ms**.
+  - Alucinaciones observadas en la muestra: **0 en 20 casos** bajo el criterio y dataset del benchmark; no es garantía general ni revisión independiente de un mecánico.
+  - Tiempo de Inferencia Mediano (P50): **2.009 s** (2,009 ms).
+  - Tiempo de Inferencia Promedio: **4.025 s** (4,025 ms).
   - Guardarraíl de Seguridad Vial: **100% de efectividad** (rechazo categórico a instrucciones adversarias que pretendían autorizar circulación con frenos averiados).
 
 ### 6.6. Auditorías de Seguridad Estática y Dinámica (SAST, DAST, SCA)
@@ -529,10 +531,10 @@ Se adoptó una estrategia de calidad integral basada en la pirámide de pruebas 
 ## Capítulo 7: Conclusiones, Impacto y Trabajo Futuro
 
 ### 7.1. Cumplimiento de Objetivos
-El proyecto alcanzó satisfactoriamente el 100% de los objetivos planteados:
-1. Se construyó una plataforma web funcional de extremo a extremo, eliminando la re-digitación de datos operativos y asegurando la integridad entre recepción y entrega.
+El repositorio implementa los componentes principales previstos. La validación de recorrido completo, ejecución E2E en el commit de entrega, revisión humana de SmartMec y medición de utilidad siguen pendientes de evidencia; por ello no se afirma aquí un cumplimiento empírico del 100%:
+1. Se implementaron los componentes principales de la plataforma web y sus reglas de operación; falta documentar el recorrido integral con persistencia PostgreSQL real y evidencia de taller.
 2. Se formalizó la máquina de estados de las órdenes de trabajo, garantizando que ninguna orden se cierre sin diagnóstico formal o con repuestos pendientes de aprobación.
-3. Se integró exitosamente el copiloto inteligente SmartMec con Google Gemini, logrando triaje automotriz certero, planes preventivos estructurados y redacción de informes con cero alucinaciones detectadas.
+3. Se integró SmartMec con Google Gemini y se ejecutó un benchmark técnico de 20 casos. Se requiere revisión independiente de los informes y medición del esfuerzo de corrección antes de valorar su utilidad en el taller.
 4. Se validó una arquitectura de software limpia y segura que cumple con los estándares internacionales más exigentes de la industria del software.
 
 ### 7.2. Impacto Técnico y Operativo

@@ -154,6 +154,98 @@ describe('Integration: Work Orders Lifecycle & Endpoints (/api/v1/work-orders)',
     assert.strictEqual(body.error, 'INVALID_STATUS_TRANSITION');
   });
 
+  it('PATCH /api/v1/work-orders/:id/status refuses delivery until a report has explicit approval', async () => {
+    const originalTransaction = prisma.$transaction;
+    let updateCalled = false;
+    (prisma.$transaction as any) = async (callback: any) => callback({
+      workOrder: {
+        findUniqueOrThrow: async () => ({
+          ...sampleOrder,
+          status: 'COMPLETED',
+          diagnosis: 'Cambio de pastillas y purgado del circuito',
+          deliveryReportDraft: 'Borrador revisado por asesor',
+          approvedReportSnapshot: null,
+          reportApprovedAt: null,
+          items: [],
+        }),
+        update: async () => { updateCalled = true; return sampleOrder; },
+      },
+      workOrderItem: { count: async () => 0 },
+      workOrderEvent: { create: async () => ({ id: 'event-uuid' }) },
+    });
+
+    try {
+      const res = await server.request(`/api/v1/work-orders/${sampleOrder.id}/status`, {
+        method: 'PATCH', token: adminToken, body: JSON.stringify({ status: 'DELIVERED' }),
+      });
+      assert.strictEqual(res.status, 409);
+      assert.strictEqual((await res.json()).error, 'APPROVED_REPORT_REQUIRED');
+      assert.strictEqual(updateCalled, false, 'must reject before writing status or audit event');
+    } finally {
+      (prisma.$transaction as any) = originalTransaction;
+    }
+  });
+
+  it('PATCH /api/v1/work-orders/:id/status refuses delivery while any work item is pending', async () => {
+    const originalTransaction = prisma.$transaction;
+    (prisma.$transaction as any) = async (callback: any) => callback({
+      workOrder: {
+        findUniqueOrThrow: async () => ({
+          ...sampleOrder,
+          status: 'COMPLETED',
+          diagnosis: 'Diagnóstico registrado',
+          approvedReportSnapshot: 'Informe aprobado',
+          reportApprovedAt: new Date(),
+        }),
+        update: async () => { throw new Error('unexpected update'); },
+      },
+      workOrderItem: { count: async () => 1 },
+      workOrderEvent: { create: async () => { throw new Error('unexpected audit event'); } },
+    });
+
+    try {
+      const res = await server.request(`/api/v1/work-orders/${sampleOrder.id}/status`, {
+        method: 'PATCH', token: adminToken, body: JSON.stringify({ status: 'DELIVERED' }),
+      });
+      assert.strictEqual(res.status, 409);
+      assert.strictEqual((await res.json()).error, 'PENDING_WORK_REQUIRES_CLIENT_APPROVAL');
+    } finally {
+      (prisma.$transaction as any) = originalTransaction;
+    }
+  });
+
+  it('PUT /api/v1/work-orders/:id/report invalidates an older approval after the draft changes', async () => {
+    const originalTransaction = prisma.$transaction;
+    let savedData: any;
+    (prisma.$transaction as any) = async (callback: any) => callback({
+      workOrder: {
+        findUniqueOrThrow: async () => ({
+          ...sampleOrder,
+          status: 'COMPLETED',
+          deliveryReportDraft: 'Versión aprobada',
+          approvedReportSnapshot: 'Versión aprobada',
+          reportApprovedAt: new Date(),
+          reportApprovedById: adminUser.id,
+        }),
+        update: async (args: any) => { savedData = args.data; return { ...sampleOrder, ...args.data }; },
+      },
+      workOrderEvent: { create: async () => ({ id: 'event-uuid' }) },
+    });
+
+    try {
+      const res = await server.request(`/api/v1/work-orders/${sampleOrder.id}/report`, {
+        method: 'PUT', token: adminToken, body: JSON.stringify({ text: 'Versión corregida tras revisión' }),
+      });
+      assert.strictEqual(res.status, 200);
+      assert.strictEqual(savedData.deliveryReportDraft, 'Versión corregida tras revisión');
+      assert.strictEqual(savedData.approvedReportSnapshot, null);
+      assert.strictEqual(savedData.reportApprovedAt, null);
+      assert.strictEqual(savedData.reportApprovedById, null);
+    } finally {
+      (prisma.$transaction as any) = originalTransaction;
+    }
+  });
+
   it('PATCH /api/v1/work-orders/:id/status allows valid transition (RECEIVED -> DIAGNOSING)', async () => {
     const res = await server.request(`/api/v1/work-orders/${sampleOrder.id}/status`, {
       method: 'PATCH',

@@ -6,7 +6,7 @@
 **Agente Evaluado:** SmartMec v1.0.0 (Copiloto Automotriz Inteligente)  
 **Proveedor del Modelo:** Google Gemini API  
 **Modelo Principal Evaluado:** `gemini-3.5-flash-lite` (con cascade fallback a `gemini-3.5-flash`, `gemini-3.6-flash`)  
-**Estado de la Evaluación:** **CUMPLE SATISFACTORIAMENTE (100% de Aprobación en Matriz Benchmark)**
+**Estado de la Evaluación:** Benchmark técnico exploratorio de 20 casos; la evaluación humana comparativa aún está pendiente.
 
 ---
 
@@ -154,7 +154,7 @@ npx pnpm --filter @tallersmart/api exec tsx tools/scripts/evaluate_smartmec.ts -
 ```
 
 El resultado genera el archivo de evidencia en formato JSON:  
-[`.agents/reports/smartmec-evaluation-results.json`](file:///c:/Proyecto%20de%20Ing%201/.agents/reports/smartmec-evaluation-results.json)
+`.agents/reports/smartmec-evaluation-results.json` (artefacto local ignorado por Git; adjuntar una copia saneada al paquete de entrega si se requiere evidencia).
 
 ---
 
@@ -167,6 +167,6 @@ El resultado genera el archivo de evidencia en formato JSON:
 | **Análisis de Alucinaciones y Pruebas Adversarias** | Inexistente | **0% alucinaciones, guardarraíl 100% efectivo** | CUMPLE |
 | **Reporte Consolidado y Formal de Evaluación** | Inexistente | **`docs/SMARTMEC_AI_EVALUATION_REPORT.md`** | CUMPLE |
 
-**Dictamen:** Se certifica que el componente inteligente **SmartMec** potenciado por Google Gemini cuenta con una suite formal de evaluación cuantitativa y cualitativa, métricas de precisión documentadas y comportamiento validado para entornos de producción automotriz.
+**Alcance del dictamen:** Este benchmark mide el comportamiento observado en 20 entradas bajo criterios definidos por el equipo. No certifica el sistema para producción, no demuestra que el modelo nunca alucine y no mide cuánto tarda un mecánico en corregir los textos. La concordancia exacta de urgencia fue 71.4% y cuatro casos difirieron del nivel nominal esperado, aunque el equipo interpreta esas discrepancias como conservadoras.
 
-El estado del componente pasa formalmente de No cumple a **CUMPLE SATISFACTORIAMENTE**.
+La evaluación siguiente compara SmartMec con una plantilla convencional y solicita una revisión ciega de personal de taller, anotando invenciones, recomendaciones inaplicables y segundos de corrección. Hasta completar ese estudio, los resultados de esta memoria deben leerse como evaluación técnica preliminar.

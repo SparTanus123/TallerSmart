@@ -4,16 +4,18 @@ Plataforma integral de grado de ingeniería diseñada para la digitalización, c
 
 ---
 
-## Resumen de Cumplimiento:
+## Estado de Avance 6
+
+El producto y su documentación están avanzados. Las pruebas de navegador, la demostración persistente de una OT completa, la revisión humana de SmartMec, la medición de utilidad y la restauración de fotos todavía requieren evidencia de ejecución. El plan de registro está en [`docs/AVANCE6_VALIDACION_Y_EVIDENCIAS.md`](docs/AVANCE6_VALIDACION_Y_EVIDENCIAS.md). Las cifras históricas de los informes no sustituyen una ejecución reproducible en el commit entregado.
 
 El proyecto satisface a cabalidad los cuatro componentes requeridos para la entrega de **Terminación, pruebas y validación**:
 
 | Componente Exigido | Estado | Evidencias y Documentación Técnica |
 | :--- | :---: | :--- |
-| **1. Producto prácticamente terminado** | **100% (Aprobado)** | • Backend REST API (`apps/api`) completo con autenticación criptográfica PBKDF2/HMAC y RBAC.<br>• Base de datos PostgreSQL con migraciones y transacciones ACID.<br>• Frontend Web (`apps/web`) en Next.js 15 con compilación limpia (`next build`) y diseño responsivo.<br>• Flujo operativo íntegro: Recepción con inventario de daños → Asignación de bahía → Diagnóstico → Presupuesto y repuestos → Control de calidad → Entrega y emisión de 4 tipos de documentos PDF binarios. |
-| **2. Resultados de pruebas** | **100% (Aprobado)** | • **73 de 73 pruebas automatizadas de backend aprobadas (100% éxito)**: 36 unitarias y 37 de integración.<br>• Suite de 9 pruebas funcionales y End-to-End con Playwright (`tests/e2e`).<br>• Cumplimiento estricto de estándares: **OWASP ASVS v4.0.3 (100%)**, **OWASP WSTG v4.2 (100%)**, **Semgrep SAST (0 alertas)**, **Gitleaks (0 secretos)** y **OpenSSF Scorecard (10.0 / 10)**.<br>• Documento consolidado: [`docs/TESTING_VALIDATION_REPORT.md`](docs/TESTING_VALIDATION_REPORT.md). |
-| **3. Evaluación del componente inteligente** | **100% (Aprobado)** | • Benchmark formal del copiloto **SmartMec** (`gemini-3.5-flash-lite` con cascade fallback) contra un dataset de **20 casos empíricos automotrices reales**.<br>• **100.0% acierto en detección de subsistemas mecánicos**, correlación de códigos OBD-II (SAE J1979), **0% alucinaciones**, rechazo de ataques adversarios y latencia mediana P50 de 2.0 s.<br>• Informe formal: [`docs/SMARTMEC_AI_EVALUATION_REPORT.md`](docs/SMARTMEC_AI_EVALUATION_REPORT.md). |
-| **4. Borrador completo del documento del proyecto** | **100% (Aprobado)** | • Memoria técnica formal y académica de 562 líneas estructurada según estándares IEEE e ISO/IEC 25010.<br>• Capítulos desarrollados en su totalidad: Introducción, Marco Teórico, Requisitos (RF/RNF), Arquitectura C4 y FSM, Implementación Técnica, Aseguramiento de Calidad y Conclusiones.<br>• Documento completo: [`docs/MEMORIA_TECNICA_PROYECTO.md`](docs/MEMORIA_TECNICA_PROYECTO.md). |
+| **1. Producto prácticamente terminado** | **Implementado; recorrido real pendiente de evidencia** | • API, PostgreSQL, autenticación, roles, órdenes, eventos y documentos están en el repositorio.<br>• La demostración debe confirmar el flujo completo y la persistencia con PostgreSQL real; consultar el protocolo de evidencias. |
+| **2. Resultados de pruebas** | **Ejecución local: 80 backend + 9 E2E aprobadas** | • El 11-11-2026 pasaron 80 pruebas backend, 9 pruebas Playwright y el build web.<br>• Playwright cubre login, navegación y smoke; aún no prueba el recorrido integral de la OT con PostgreSQL real.<br>• Detalles y limitaciones: [`docs/TESTING_VALIDATION_REPORT.md`](docs/TESTING_VALIDATION_REPORT.md). |
+| **3. Evaluación del componente inteligente** | **Benchmark técnico existente; evaluación de taller pendiente** | • Informe de 20 casos con 71.4% de concordancia de urgencia y discrepancias descritas.<br>• Falta comparación con plantilla convencional, revisión humana independiente y tiempo de corrección. No generalizar “cero alucinaciones”. |
+| **4. Borrador del documento** | **Borrador amplio existente; edición final pendiente** | • Memoria técnica con requisitos, arquitectura, implementación y QA.<br>• Revisar que los resultados afirmados correspondan a evidencia reproducible y agregar el protocolo de validación. |
 
 ---
 

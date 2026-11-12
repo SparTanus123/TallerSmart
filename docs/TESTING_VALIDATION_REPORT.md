@@ -1,10 +1,10 @@
 # Informe Consolidado de Pruebas y Validación de Calidad
 ## Plataforma TallerSmart (Gestión y Trazabilidad Automotriz)
 
-**Fecha de Ejecución:** 2026-11-06  
+**Ejecución original:** 2026-11-06 (73 backend); revalidación local: 2026-11-11 (80 backend y 9 E2E)
 **Ambiente:** Node.js v25.9.0 / Windows x64  
 **Frameworks de Pruebas:** `node:test` + `tsx` (Unitarias e Integración) | `@playwright/test` v1.64.1 (E2E / Funcional)  
-**Estado General de la Suite:** **CUMPLE AL 100% (73/73 Pruebas Automatizadas Backend Exitosas + 9 Pruebas E2E Diseñadas)**
+**Estado General:** La ejecución original registró 73/73 backend. La revalidación del 2026-11-11 registró 80 backend y 9/9 E2E aprobadas; ver alcance y limitaciones en la sección 8. Los E2E no cubren el ciclo integral de la orden.
 
 ---
 
@@ -201,7 +201,15 @@ npx playwright test
 | **Pruebas Unitarias Backend** | 0 pruebas (carpeta vacía) | **36 pruebas** (11 suites) | Cumple |
 | **Pruebas de Integración Backend** | 0 pruebas (carpeta vacía) | **37 pruebas** (7 suites) | Cumple |
 | **Pruebas E2E / Funcionales** | 2 pruebas básicas | **9 pruebas** (3 suites) | Cumple |
-| **Tasa de Éxito en Ejecución** | N/A | **100% (73/73 pasadas)** | Cumple |
+| **Tasa de Éxito en Ejecución** | N/A | Ejecución original 73/73; revalidación local 80/80 backend y 9/9 E2E (alcance limitado; ver sección 8) | Revisar alcance |
 | **Documento Consolidado de Validación** | No existía | **`docs/TESTING_VALIDATION_REPORT.md`** | Cumple |
 
-**Dictamen:** Se satisface plenamente el criterio de aceptación. El estado pasa de No cumple a **CUMPLE SATISFACTORIAMENTE**.
+**Dictamen de la ejecución original:** La suite backend pasó en su ambiente de noviembre 6. La revalidación posterior mejora la evidencia disponible, aunque el recorrido persistente completo y la evaluación humana de SmartMec siguen pendientes.
+
+## 8. Revalidación local del cambio de entrega (2026-11-11)
+
+En una ejecución posterior, después de exigir aprobación explícita del informe antes de entregar, se ejecutó la suite backend directamente con `tsx` instalado: **80 pruebas aprobadas, 0 fallidas**. Incluye rechazos de entrega con informe sin aprobar y con ítems pendientes, y una prueba que confirma que editar un informe invalida la aprobación anterior. Varias pruebas de integración usan dobles de Prisma, por lo que no sustituyen una prueba de persistencia PostgreSQL real.
+
+También se ejecutó Playwright con Chromium: **9 aprobadas, 0 fallidas**. Una primera ejecución dio 8/9 por un selector de la página 404 que coincidía con dos textos; se ajustó para seleccionar el encabezado y la segunda ejecución pasó. Estos nueve casos cubren login, navegación y smoke; no recorren el ciclo completo de una OT.
+
+La compilación de producción de Next.js terminó correctamente con `next build`. El comando `pnpm test` no llegó a arrancar en este entorno porque el `pnpm` disponible quiso reinstalar dependencias y abortó al no disponer de TTY; se usó el ejecutable `tsx` ya presente, sin reinstalar módulos. El protocolo documenta el ambiente, comandos y brechas restantes.

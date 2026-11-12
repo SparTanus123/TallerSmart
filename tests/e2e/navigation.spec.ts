@@ -6,7 +6,7 @@ test.describe('E2E: Navigation & Application Shell Suite', () => {
     // Should render not-found page or redirect safely
     const body = page.locator('body');
     await expect(body).toBeVisible();
-    await expect(page.locator('text=/404|no encontrada|no existe/i')).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('heading', { name: 'Página no encontrada' })).toBeVisible({ timeout: 5000 });
   });
 
   test('login page has proper mobile responsive meta and structure', async ({ page }) => {
